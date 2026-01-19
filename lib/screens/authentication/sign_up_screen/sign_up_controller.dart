@@ -40,6 +40,8 @@ class SignUpController extends GetxController {
   }*/
 
   Future<void> addUser() async {
+    if (!isValid()) return;
+
     final email = emailController.text.trim();
 
     final existingUser = await RealtimeDbHelper.instance.getUserByEmail(email);

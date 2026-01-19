@@ -124,6 +124,7 @@ class CustomTextField extends StatelessWidget {
               disableScroll: true,
               child: TextFormField(
                 focusNode: focusNode,
+                cursorHeight: 20.h,
                 textAlign: textAlign ?? TextAlign.start,
                 initialValue: initialValue,
                 inputFormatters: inputFormatters ?? [],
@@ -131,6 +132,7 @@ class CustomTextField extends StatelessWidget {
                 obscureText: obscureText ?? false,
                 obscuringCharacter: "●",
                 enabled: enabled ?? true,
+                textAlignVertical: TextAlignVertical.center,
                 textInputAction: textInputAction ?? TextInputAction.next,
                 keyboardType: keyboardType ?? TextInputType.text,
                 textCapitalization: textCapitalization ?? TextCapitalization.sentences,
@@ -143,7 +145,7 @@ class CustomTextField extends StatelessWidget {
                   return null;
                 },
                 maxLength: maxLength,
-                style: textStyle ?? StyleHelper.customStyle(color: AppColors.black),
+                style: textStyle ?? StyleHelper.customStyle(color: AppColors.black,size: 6.sp),
                 readOnly: readOnly ?? false,
                 decoration: InputDecoration(
                   hintText: hintText,
@@ -176,8 +178,8 @@ class CustomTextField extends StatelessWidget {
                   // prefixIconConstraints: BoxConstraints(maxWidth: prefix==null?15.w:40.w, minWidth: prefix==null?0:40.w),
                   suffixIcon: suffixIcon,
                   suffixIconConstraints: BoxConstraints(maxWidth: suffixIconMaxWidth ?? 40.w, minWidth: suffixIconMinWidth ?? 30.w),
-                  contentPadding: contentPadding ?? EdgeInsets.all(10.sp),
-                  hintStyle: hintStyle ?? StyleHelper.customStyle(color: AppColors.darkGray,family: regular),
+                  contentPadding: contentPadding ?? EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                  hintStyle: hintStyle ?? StyleHelper.customStyle(color: AppColors.darkGray,family: regular,size: 8.sp),
                 ),
                 maxLines: maxLines ?? 1,
                 cursorColor: borderColor ?? AppColors.black,

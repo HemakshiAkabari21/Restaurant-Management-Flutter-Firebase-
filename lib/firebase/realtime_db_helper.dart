@@ -1,4 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
 import 'package:restaurant_management_fierbase/model/category_model.dart';
 import 'package:restaurant_management_fierbase/model/product_model.dart';
@@ -70,6 +71,7 @@ class RealtimeDbHelper {
       final snapshot = await ref(path).get();
       return snapshot;
     } catch (e) {
+      debugPrint("ERROR::::::$e");
       rethrow;
     }
   }
@@ -108,30 +110,42 @@ class RealtimeDbHelper {
   /// -----------------------------
 
   Future<UserDetail?> getUserByEmail(String email) async {
-    final snapshot = await ref('users').get();
+    try {
+      final emailLower = email.trim().toLowerCase();
 
-    if (!snapshot.exists) return null;
+      // Perform the query
+      final snapshot = await ref('users')
+          .orderByChild('email')
+          .equalTo(emailLower)
+          .get();
 
-    final value = snapshot.value;
+      if (!snapshot.exists || snapshot.value == null) return null;
 
-    if (value is! Map<dynamic, dynamic>) return null;
+      // Snapshot.value for a query is ALWAYS a Map of { "id": { data } }
+      // We use Map.from to avoid type-cast errors with dynamic maps
+      final rawData = snapshot.value;
+      if (rawData is Map) {
+        final dataMap = Map<dynamic, dynamic>.from(rawData);
 
-    final emailLower = email.trim().toLowerCase();
-
-    for (final entry in value.entries) {
-      final userValue = entry.value;
-
-      if (userValue is Map<dynamic, dynamic>) {
-        final userEmail = (userValue['email'] ?? '').toString().trim().toLowerCase();
-
-        if (userEmail == emailLower) {
-          return UserDetail.fromMap(entry.key.toString(), userValue);
+        if (dataMap.isNotEmpty) {
+          final entry = dataMap.entries.first;
+          return UserDetail.fromMap(
+            entry.key.toString(),
+            Map<String, dynamic>.from(entry.value as Map),
+          );
         }
       }
+      return null;
+    } catch (e) {
+      // This catches the 'String is not subtype of Map' error if the index is missing
+      debugPrint('Firebase Query Error: $e');
+      if (e.toString().contains('String')) {
+        debugPrint('CRITICAL: Check your Firebase Database Rules for .indexOn: ["email"]');
+      }
+      return null;
     }
-
-    return null;
   }
+
 
   Future<List<MasterCategoryModel>> getMasterCategories() async {
     final snap = await ref('master_categories').get();

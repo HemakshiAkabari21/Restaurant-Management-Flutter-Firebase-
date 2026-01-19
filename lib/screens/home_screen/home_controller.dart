@@ -1,10 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 
 class HomeController extends GetxController {
 
+  RxString selectedTab = "home".obs;
+
   Future<void> createRestaurantTables(int count) async {
+    debugPrint("Last Table NO:::::::::${getLastTableNumber()}");
     final lastTableNo = await getLastTableNumber();
 
     for (int i = 1; i <= count; i++) {
@@ -25,42 +29,33 @@ class HomeController extends GetxController {
   }
 
   Future<int> getLastTableNumber() async {
-    final snapshot = await RealtimeDbHelper.instance
-        .getDataOnce('restaurant_tables');
+    final snapshot = await RealtimeDbHelper.instance.ref('restaurant_tables').orderByChild('table_no').limitToLast(1).get();
 
-    if (!snapshot.exists || snapshot.value is! Map) return 0;
+    if (!snapshot.exists || snapshot.value == null) return 0;
 
-    final data = snapshot.value as Map<dynamic, dynamic>;
+    final map = snapshot.value as Map<dynamic, dynamic>;
+    final last = map.values.first;
 
-    int maxTableNo = 0;
+    if (last is! Map) return 0;
 
-    for (final value in data.values) {
-      if (value is Map<dynamic, dynamic>) {
-        final no = int.tryParse(value['table_no'].toString()) ?? 0;
-        if (no > maxTableNo) maxTableNo = no;
-      }
-    }
-
-    return maxTableNo;
+    return int.tryParse(last['table_no'].toString()) ?? 0;
   }
 
   Future<List<RestaurantTableModel>> getTablesOnce() async {
-    final snapshot = await RealtimeDbHelper.instance
-        .getDataOnce('restaurant_tables');
+    final snapshot = await RealtimeDbHelper.instance.ref('restaurant_tables').orderByChild('table_no').get();
+    debugPrint("Snapshot:::::::::: $snapshot");
+    if (!snapshot.exists || snapshot.value == null) return [];
 
-    if (!snapshot.exists || snapshot.value is! Map) return [];
+    final map = snapshot.value as Map<dynamic, dynamic>;
 
-    final data = snapshot.value as Map<dynamic, dynamic>;
-
-    return data.entries
+    return map.entries
+        .where((e) => e.value is Map)
         .map((e) => RestaurantTableModel.fromMap(
       e.key.toString(),
-      e.value as Map<dynamic, dynamic>,
+      Map<String, dynamic>.from(e.value),
     ))
-        .toList()
-      ..sort((a, b) => int.parse(a.tableNo).compareTo(int.parse(b.tableNo)));
+        .toList();
   }
-
 
   Future<void> updateTable(RestaurantTableModel table) async {
     await RealtimeDbHelper.instance.updateData(

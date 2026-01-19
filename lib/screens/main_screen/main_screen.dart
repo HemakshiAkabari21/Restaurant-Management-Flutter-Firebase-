@@ -123,8 +123,8 @@ class _MainScreenState extends State<MainScreen> {
       },
       child: Obx(()=> Column(
         children: [
-          Image.asset(icon,height: 18.h,width: 18.w,color: mainController.currentIndex.value == index ? AppColors.white : AppColors.lightGray,fit: BoxFit.contain),
-          Text(name,style: StyleHelper.customStyle(color: mainController.currentIndex.value == index ? AppColors.white : AppColors.lightGray,size: 12.sp,family: medium)),
+          Image.asset(icon,height: 16.h,width: 16.w,color: mainController.currentIndex.value == index ? AppColors.white : AppColors.lightGray,fit: BoxFit.contain),
+          Text(name,style: StyleHelper.customStyle(color: mainController.currentIndex.value == index ? AppColors.white : AppColors.lightGray,size: 4.sp,family: medium)),
         ],
       ),
       ),

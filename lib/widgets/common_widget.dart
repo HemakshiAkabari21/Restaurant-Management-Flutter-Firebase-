@@ -727,7 +727,7 @@ void showErrorSnackBar({required String title,required String message,Color? col
           /// Left red stripe
           Container(
             width: 6.w,
-            height: 60.h,
+            height: 160.h,
             decoration: BoxDecoration(
               color: color ?? Colors.red,
               borderRadius:  BorderRadius.only(
@@ -754,7 +754,7 @@ void showErrorSnackBar({required String title,required String message,Color? col
                 Text(
                   title,
                   style: StyleHelper.customStyle(
-                    size: 12.sp,
+                    size: 8.sp,
                     family: bold,
                     color: AppColors.black,
                   ),
@@ -763,7 +763,7 @@ void showErrorSnackBar({required String title,required String message,Color? col
                 Text(
                   message,
                   style: StyleHelper.customStyle(
-                    size: 12.sp,
+                    size: 6.sp,
                     family: medium,
                     color: AppColors.darkGray,
                   ),
