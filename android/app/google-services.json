@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "705574751728",
+    "firebase_url": "https://restaurant-management-6ae21-default-rtdb.firebaseio.com",
+    "project_id": "restaurant-management-6ae21",
+    "storage_bucket": "restaurant-management-6ae21.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705574751728:android:e357e92fa6428d459b2135",
+        "android_client_info": {
+          "package_name": "com.prognostic.restaurant_management_fierbase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "705574751728-48n3hpfkp85357369ov2gfj51fgn6gbk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsC14RiCl7Kqex-t3DMTSGtgkuiY3v884"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "705574751728-48n3hpfkp85357369ov2gfj51fgn6gbk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
