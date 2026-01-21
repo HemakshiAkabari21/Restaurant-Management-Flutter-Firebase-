@@ -5,6 +5,7 @@ import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
+import 'package:restaurant_management_fierbase/screens/main_layout_screen/main_layout_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String tableId;
@@ -36,7 +37,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Color(0xFF2d4875),
+        backgroundColor: AppColors.black,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
@@ -46,60 +47,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
           "Payment & Billing",
           style: StyleHelper.customStyle(
             color: AppColors.white,
-            size: 18.sp,
+            size: 8.sp,
             family: semiBold,
           ),
         ),
       ),
       body: Column(
         children: [
-          // Header Section with Gradient
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF2d4875), Color(0xFF1a2847)],
-              ),
-            ),
-            padding: EdgeInsets.symmetric(vertical: 30.h, horizontal: 20.w),
-            child: Column(
-              children: [
-                Text(
-                  "Table ${widget.tableId}",
-                  style: StyleHelper.customStyle(
-                    color: Colors.white70,
-                    size: 14.sp,
-                    family: regular,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  "₹${total.toStringAsFixed(2)}",
-                  style: StyleHelper.customStyle(
-                    color: AppColors.white,
-                    size: 42.sp,
-                    family: semiBold,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  "Total Amount",
-                  style: StyleHelper.customStyle(
-                    color: Colors.white70,
-                    size: 13.sp,
-                    family: regular,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Order Summary
+          /// Order Summary
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(20.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -108,26 +65,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: Offset(0, 2),),],
                     ),
-                    padding: EdgeInsets.all(16.w),
+                    padding: EdgeInsets.all(6.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Order Summary",
-                          style: StyleHelper.customStyle(
-                            color: Color(0xFF1a2847),
-                            size: 16.sp,
-                            family: semiBold,
-                          ),
-                        ),
+                        Text("Order Summary", style: StyleHelper.customStyle(color: AppColors.black, size: 6.sp, family: semiBold,),),
                         SizedBox(height: 16.h),
                         ...widget.cartItems.map((item) => Padding(
                           padding: EdgeInsets.only(bottom: 12.h),
@@ -143,14 +87,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                         vertical: 4.h,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Color(0xFF2d4875).withOpacity(0.1),
+                                        color: AppColors.black.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(6.r),
                                       ),
                                       child: Text(
                                         "${item.qty}x",
                                         style: StyleHelper.customStyle(
-                                          color: Color(0xFF2d4875),
-                                          size: 12.sp,
+                                          color:AppColors.black,
+                                          size: 4.sp,
                                           family: semiBold,
                                         ),
                                       ),
@@ -161,7 +105,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                         item.productName,
                                         style: StyleHelper.customStyle(
                                           color: Colors.grey.shade800,
-                                          size: 14.sp,
+                                          size: 4.sp,
                                           family: regular,
                                         ),
                                       ),
@@ -172,8 +116,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               Text(
                                 "₹${(double.parse(item.productPrice) * item.qty).toStringAsFixed(2)}",
                                 style: StyleHelper.customStyle(
-                                  color: Color(0xFF1a2847),
-                                  size: 14.sp,
+                                  color: AppColors.black,
+                                  size: 4.sp,
                                   family: semiBold,
                                 ),
                               ),
@@ -187,16 +131,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             Text(
                               "Total",
                               style: StyleHelper.customStyle(
-                                color: Color(0xFF1a2847),
-                                size: 16.sp,
+                                color: AppColors.black,
+                                size: 6.sp,
                                 family: semiBold,
                               ),
                             ),
                             Text(
                               "₹${total.toStringAsFixed(2)}",
                               style: StyleHelper.customStyle(
-                                color: Color(0xFF2d4875),
-                                size: 18.sp,
+                                color: AppColors.black,
+                                size: 6.sp,
                                 family: semiBold,
                               ),
                             ),
@@ -208,28 +152,22 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                   SizedBox(height: 20.h),
 
-                  // Payment Method
+                  /// Payment Method
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: Offset(0, 2),),],
                     ),
-                    padding: EdgeInsets.all(16.w),
+                    padding: EdgeInsets.all(6.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "Payment Method",
                           style: StyleHelper.customStyle(
-                            color: Color(0xFF1a2847),
-                            size: 16.sp,
+                            color:AppColors.black,
+                            size: 6.sp,
                             family: semiBold,
                           ),
                         ),
@@ -240,15 +178,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             onTap: () => setState(() => method = pm),
                             child: Container(
                               margin: EdgeInsets.only(bottom: 10.h),
-                              padding: EdgeInsets.all(14.w),
+                              padding: EdgeInsets.all(4.w),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? Color(0xFF2d4875).withOpacity(0.1)
+                                    ? AppColors.black.withOpacity(0.1)
                                     : Colors.grey.shade50,
                                 borderRadius: BorderRadius.circular(10.r),
                                 border: Border.all(
                                   color: isSelected
-                                      ? Color(0xFF2d4875)
+                                      ? AppColors.black
                                       : Colors.grey.shade300,
                                   width: 1.5,
                                 ),
@@ -256,11 +194,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               child: Row(
                                 children: [
                                   Icon(
-                                    _getPaymentIcon(pm),
+                                    getPaymentIcon(pm),
                                     color: isSelected
-                                        ? Color(0xFF2d4875)
+                                        ? AppColors.black
                                         : Colors.grey.shade600,
-                                    size: 24.sp,
+                                    size: 24,
                                   ),
                                   SizedBox(width: 12.w),
                                   Expanded(
@@ -268,9 +206,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       pm.name.toUpperCase(),
                                       style: StyleHelper.customStyle(
                                         color: isSelected
-                                            ? Color(0xFF2d4875)
+                                            ? AppColors.black
                                             : Colors.grey.shade800,
-                                        size: 14.sp,
+                                        size: 6.sp,
                                         family: isSelected ? semiBold : regular,
                                       ),
                                     ),
@@ -278,8 +216,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   if (isSelected)
                                     Icon(
                                       Icons.check_circle,
-                                      color: Color(0xFF2d4875),
-                                      size: 22.sp,
+                                      color: AppColors.black,
+                                      size: 10.sp,
                                     ),
                                 ],
                               ),
@@ -288,9 +226,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         }).toList(),
                       ],
                     ),
-                  ),
-
-                  SizedBox(height: 20.h),
+                  ).paddingOnly(bottom: 10.h),
 
                   // Payment Status
                   Container(
@@ -305,14 +241,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                       ],
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
                     child: SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
                         "Payment Received",
                         style: StyleHelper.customStyle(
-                          color: Color(0xFF1a2847),
-                          size: 15.sp,
+                          color: AppColors.black,
+                          size: 5.sp,
                           family: semiBold,
                         ),
                       ),
@@ -320,12 +256,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         isPaid ? "Payment confirmed" : "Payment pending",
                         style: StyleHelper.customStyle(
                           color: Colors.grey.shade600,
-                          size: 12.sp,
+                          size: 4.sp,
                           family: regular,
                         ),
                       ),
                       value: isPaid,
-                      activeColor: Color(0xFF2d4875),
+                      activeColor:AppColors.black,
                       onChanged: (val) => setState(() => isPaid = val),
                     ),
                   ),
@@ -338,7 +274,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
           // Bottom Button
           Container(
-            padding: EdgeInsets.all(20.w),
+            padding: EdgeInsets.all(6.sp),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -351,9 +287,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             child: SafeArea(
               child: ElevatedButton(
-                onPressed: method != null ? _confirmPayment : null,
+                onPressed: method != null ? confirmPayment : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF2d4875),
+                  backgroundColor: AppColors.black,
                   disabledBackgroundColor: Colors.grey.shade300,
                   minimumSize: Size(double.infinity, 56.h),
                   shape: RoundedRectangleBorder(
@@ -365,7 +301,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   "Confirm Payment & Close Table",
                   style: StyleHelper.customStyle(
                     color: AppColors.white,
-                    size: 16.sp,
+                    size: 6.sp,
                     family: semiBold,
                   ),
                 ),
@@ -377,7 +313,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  IconData _getPaymentIcon(PaymentMethod method) {
+  IconData getPaymentIcon(PaymentMethod method) {
     switch (method) {
       case PaymentMethod.cash:
         return Icons.money;
@@ -392,7 +328,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  Future<void> _confirmPayment() async {
+  Future<void> confirmPayment() async {
     if (method == null) {
       Get.snackbar(
         "Error",
@@ -403,9 +339,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    // Show loading
+    // Show loading dialog
     Get.dialog(
-      Center(child: CircularProgressIndicator()),
+      const Center(child: CircularProgressIndicator()),
       barrierDismissible: false,
     );
 
@@ -424,16 +360,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'carts/${widget.tableId}',
       );
 
-      // Update table status to available
+      // Update table status
       await RealtimeDbHelper.instance.updateData(
-        path: 'tables/${widget.tableId}',
+        path: 'restaurant_tables/${widget.tableId}',
         data: {'status': 'available'},
       );
 
-      // Close loading dialog
-      Get.back();
+      // Close loading dialog safely
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
 
-      // Show success message
+      // Close any open snackbar safely
+      if (Get.isSnackbarOpen) {
+        Get.closeCurrentSnackbar();
+      }
+
+      // Show success
       Get.snackbar(
         "Success",
         "Payment completed and table is now available",
@@ -441,12 +384,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
         colorText: Colors.white,
       );
 
-      // Navigate back
-      Get.back(result: true);
-      Get.back(); // back to menu
+      // Navigate back only once with result
+      Get.offAll(()=>MainLayoutScreen());
+
     } catch (e) {
-      // Close loading dialog
-      Get.back();
+      // Close loading dialog safely
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+
+      // Close any open snackbar safely
+      if (Get.isSnackbarOpen) {
+        Get.closeCurrentSnackbar();
+      }
 
       // Show error
       Get.snackbar(
@@ -457,4 +407,5 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
     }
   }
+
 }

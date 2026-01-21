@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -12,7 +11,6 @@ import 'package:restaurant_management_fierbase/model/category_model.dart';
 import 'package:restaurant_management_fierbase/model/master_category_model.dart';
 import 'package:restaurant_management_fierbase/model/product_model.dart';
 import 'package:restaurant_management_fierbase/repository/cloudinary_service.dart';
-import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
 import 'package:restaurant_management_fierbase/widgets/expandable_Selection.dart';
 
 enum MenuSettingType { master, category, product }
