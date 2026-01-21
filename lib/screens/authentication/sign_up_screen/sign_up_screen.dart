@@ -175,7 +175,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                         ),
                       ],
-                    ).paddingSymmetric(horizontal: 16.w),
+                    ).paddingSymmetric(horizontal: 26.w),
                   ],
                 ),
               ),

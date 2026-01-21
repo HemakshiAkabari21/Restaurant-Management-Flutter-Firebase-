@@ -3,6 +3,7 @@ class ProductModel {
   final String categoryId;
   final String name;
   final String price;
+  final String image;
   final int status;
 
   ProductModel({
@@ -10,35 +11,35 @@ class ProductModel {
     required this.categoryId,
     required this.name,
     required this.price,
+    required this.image,
     required this.status,
   });
 
-  /// Firebase → Model
   factory ProductModel.fromMap(String id, Map<dynamic, dynamic> map) {
     return ProductModel(
       id: id,
       categoryId: map['category_id'] ?? '',
       name: map['name'] ?? '',
       price: map['price'] ?? '0',
+      image: map['image'] ?? '',
       status: map['status'] ?? 1,
     );
   }
 
-  /// Model → Firebase
-  Map<String, dynamic> toMap() {
-    return {
-      'category_id': categoryId,
-      'name': name,
-      'price': price,
-      'status': status,
-    };
-  }
+  Map<String, dynamic> toMap() => {
+    'category_id': categoryId,
+    'name': name,
+    'price': price,
+    'image': image,
+    'status': status,
+  };
 
   ProductModel copyWith({
     String? id,
     String? categoryId,
     String? name,
     String? price,
+    String? image,
     int? status,
   }) {
     return ProductModel(
@@ -46,6 +47,7 @@ class ProductModel {
       categoryId: categoryId ?? this.categoryId,
       name: name ?? this.name,
       price: price ?? this.price,
+      image: image ?? this.image,
       status: status ?? this.status,
     );
   }

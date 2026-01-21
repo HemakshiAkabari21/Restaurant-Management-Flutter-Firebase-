@@ -11,11 +11,13 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
+import 'package:restaurant_management_fierbase/repository/cloudinary_service.dart';
 import 'package:restaurant_management_fierbase/utils/const_images_key.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'custom_button.dart';
@@ -782,6 +784,61 @@ void showErrorSnackBar({required String title,required String message,Color? col
             },
           ),
         ],
+      ),
+    ),
+  );
+}
+
+/// pickAndUpload image in Cloudinary global function
+Future<String> pickAndUpload() async {
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+  if (pickedFile != null) {
+    File image = File(pickedFile.path);
+    String? imageUrl = await CloudinaryService.uploadImage(image);
+
+    if (imageUrl != null) {
+      print("Uploaded Image URL: $imageUrl");
+      return imageUrl;
+      // Save this URL in Firebase Realtime Database
+    }else{
+      return "https://t4.ftcdn.net/jpg/06/57/37/01/360_F_657370150_pdNeG5pjI976ZasVbKN9VqH1rfoykdYU.jpg";
+    }
+  }else {
+    // user cancelled picker
+    return "https://t4.ftcdn.net/jpg/06/57/37/01/360_F_657370150_pdNeG5pjI976ZasVbKN9VqH1rfoykdYU.jpg";
+  }
+}
+
+Widget imagePickerBox({
+  required String imageUrl,
+  required VoidCallback onPick,
+}) {
+  return InkWell(
+    onTap: onPick,
+    child: Container(
+      height: 140,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Align(
+        alignment: Alignment.bottomRight,
+        child: Container(
+          margin: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Icon(Icons.edit, color: Colors.white, size: 18),
+        ),
       ),
     ),
   );

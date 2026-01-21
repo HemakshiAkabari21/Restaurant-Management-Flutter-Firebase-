@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
-import 'package:restaurant_management_fierbase/screens/main_screen/main_screen.dart';
+import 'package:restaurant_management_fierbase/screens/home_screen/home_screen.dart';
+import 'package:restaurant_management_fierbase/screens/main_layout_screen/main_layout_screen.dart';
 import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
 
@@ -43,7 +44,7 @@ class LoginController extends GetxController{
     getStorage.write(USER_DETAIL, user.toMap());
     getStorage.write(IS_LOGIN, true);
 
-    Get.offAll(() => MainScreen());
+    Get.offAll(() => MainLayoutScreen());
     showErrorSnackBar(title: 'Success', message: 'Login successful', color: AppColors.green);
   }
 

@@ -157,16 +157,31 @@ class RealtimeDbHelper {
         .toList();
   }
 
+  // FIX: Changed from 'master_id' to 'masterId' to match your Firebase structure
   Future<List<CategoryModel>> getCategoriesByMaster(String masterId) async {
-    final snap = await ref('categories').get();
-    if (!snap.exists) return [];
+    try {
+      final snap = await ref('categories').get();
+      if (!snap.exists) return [];
 
-    final map = snap.value as Map<dynamic, dynamic>;
+      final map = snap.value as Map<dynamic, dynamic>;
 
-    return map.entries
-        .where((e) => e.value['master_id'] == masterId)
-        .map((e) => CategoryModel.fromMap(e.key, e.value))
-        .toList();
+      final result = map.entries
+          .where((e) {
+        final data = e.value as Map<dynamic, dynamic>;
+        // Check for both possible field names for compatibility
+        final categoryMasterId = data['masterId'] ?? data['master_id'];
+        debugPrint('Checking category ${data['name']}: masterId=$categoryMasterId, looking for=$masterId');
+        return categoryMasterId == masterId;
+      })
+          .map((e) => CategoryModel.fromMap(e.key, e.value))
+          .toList();
+
+      debugPrint('Found ${result.length} categories for master $masterId');
+      return result;
+    } catch (e) {
+      debugPrint('Error in getCategoriesByMaster: $e');
+      return [];
+    }
   }
 
   Future<String?> insertCategory(CategoryModel model) {
@@ -199,16 +214,31 @@ class RealtimeDbHelper {
     return pushData(path: 'products', data: model.toMap());
   }
 
+  // FIX: Changed from 'category_id' to 'categoryId' to match your Firebase structure
   Future<List<ProductModel>> getProductsByCategory(String categoryId) async {
-    final snap = await ref('products').get();
-    if (!snap.exists) return [];
+    try {
+      final snap = await ref('products').get();
+      if (!snap.exists) return [];
 
-    final map = snap.value as Map<dynamic, dynamic>;
+      final map = snap.value as Map<dynamic, dynamic>;
 
-    return map.entries
-        .where((e) => e.value['category_id'] == categoryId)
-        .map((e) => ProductModel.fromMap(e.key, e.value))
-        .toList();
+      final result = map.entries
+          .where((e) {
+        final data = e.value as Map<dynamic, dynamic>;
+        // Check for both possible field names for compatibility
+        final productCategoryId = data['categoryId'] ?? data['category_id'];
+        debugPrint('Checking product ${data['name']}: categoryId=$productCategoryId, looking for=$categoryId');
+        return productCategoryId == categoryId;
+      })
+          .map((e) => ProductModel.fromMap(e.key, e.value))
+          .toList();
+
+      debugPrint('Found ${result.length} products for category $categoryId');
+      return result;
+    } catch (e) {
+      debugPrint('Error in getProductsByCategory: $e');
+      return [];
+    }
   }
 
 
@@ -267,10 +297,6 @@ class RealtimeDbHelper {
       },
     );
   }
-
-
-
-
 }
 
 /*final userId = await RealtimeDbHelper.instance.pushData(

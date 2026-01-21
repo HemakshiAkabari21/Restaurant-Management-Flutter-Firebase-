@@ -4,7 +4,7 @@ import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
 import 'package:restaurant_management_fierbase/screens/home_screen/home_screen.dart';
-import 'package:restaurant_management_fierbase/screens/main_screen/main_screen.dart';
+import 'package:restaurant_management_fierbase/screens/main_layout_screen/main_layout_screen.dart';
 import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
 
@@ -71,7 +71,7 @@ class SignUpController extends GetxController {
       getStorage.write(USER_DETAIL, loggedInUser.toMap());
       debugPrint("Stored user: ${loggedInUser.toMap()}");
       getStorage.write(IS_LOGIN, true);
-      Get.offAll(()=>MainScreen());
+      Get.offAll(()=>MainLayoutScreen());
       showErrorSnackBar(title: 'Success', message: 'User registered successfully',color: AppColors.green);
     }
   }

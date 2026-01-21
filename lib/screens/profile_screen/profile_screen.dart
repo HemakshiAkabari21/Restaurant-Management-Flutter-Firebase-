@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 40.h,
               borderRadius: 12.r,
               text: 'LOGOUT',
-              textStyle: StyleHelper.customStyle(color: AppColors.black,size: 16.sp,family: semiBold),
+              textStyle: StyleHelper.customStyle(color: AppColors.black,size: 6.sp,family: semiBold),
             )
           ],
         ).paddingSymmetric(horizontal: 16.w),

@@ -7,8 +7,7 @@ import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 import 'package:restaurant_management_fierbase/screens/home_screen/home_controller.dart';
-import 'package:restaurant_management_fierbase/utils/const_images_key.dart';
-import 'package:restaurant_management_fierbase/widgets/custom_app_bar.dart';
+import 'package:restaurant_management_fierbase/screens/menu_screen/menu_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int index) onTabChange;
@@ -19,102 +18,216 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  HomeController homeController = Get.put(HomeController());
+  HomeController homeController = Get.find<HomeController>();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.black,
-      appBar: CustomAppBar(
-        isLeading: false,
-        backgroundColor: AppColors.black,
-        statusColor: AppColors.black,
-        title: Text('Dashboard', style: StyleHelper.customStyle(color: AppColors.white, size: 10.sp, family: semiBold)),
-        actions: [GestureDetector(onTap: () {showTableCreateDialog(context);}, child: Icon(Icons.add, size: 14.sp, color: AppColors.white).paddingSymmetric(horizontal: 16.w))],
-      ),
-      body: Row(
+    return Container(
+      decoration: BoxDecoration(color: AppColors.white),
+      child: Column(
         children: [
+          // Header
+          buildHeader(),
+
+          // Table Grid
           Expanded(
-            flex: 1,
-            child: Column(
-              children: [
-                buildItem(icon: AppImages.homeIcon, name: 'home'.tr,),
-                buildItem(icon: AppImages.profileIcon, name: 'profile'.tr,),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 9,
-            child: Container(
-              color: AppColors.white,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: StreamBuilder<DatabaseEvent>(
-                      stream: RealtimeDbHelper.instance.listenToData('restaurant_tables'),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
-                          return Center(child: Text('No tables created yet'));
-                        }
-
-                        final raw = snapshot.data!.snapshot.value;
-
-                        if (raw is! Map) {
-                          return Center(child: Text('Invalid table data'));
-                        }
-
-                        final map = Map<String, dynamic>.from(raw);
-
-                        final tables = map.entries
-                            .where((e) => e.value is Map) // <-- filter out anything that is not a Map
-                            .map((e) => RestaurantTableModel.fromMap(
-                          e.key,
-                          Map<String, dynamic>.from(e.value as Map),
-                        ))
-                            .toList()
-                          ..sort((a, b) => int.parse(a.tableNo).compareTo(int.parse(b.tableNo)));
-
-                        return GridView.builder(
-                          itemCount: tables.length,
-                          gridDelegate:  SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing:8.w,
-                            crossAxisSpacing: 8.h,
-                          ),
-                          itemBuilder: (context, index) {
-                            final table = tables[index];
-
-                            return GestureDetector(
-                              onTap: () => editTableDialog(context, table),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: table.status == 'booked'
-                                      ? AppColors.errorColor
-                                      : AppColors.white,
-                                  border: Border.all(color: table.status == 'booked'?AppColors.errorColor :AppColors.black),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('Table ${table.tableNo}',style: StyleHelper.customStyle(color: table.status == 'booked' ? AppColors.white : AppColors.black,
-                                        family:  table.status == 'booked' ? semiBold : medium),),
-                                    Text('Capacity: ${table.capacityPeople}',style: StyleHelper.customStyle(color: table.status == 'booked' ? AppColors.white : AppColors.black,
-                                        family:  table.status == 'booked' ? semiBold : medium)),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
+            child: StreamBuilder<DatabaseEvent>(
+              stream: RealtimeDbHelper.instance
+                  .listenToData('restaurant_tables'),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData ||
+                    snapshot.data!.snapshot.value == null) {
+                  return Center(
+                    child: Text(
+                      'No tables created yet',
+                      style: StyleHelper.customStyle(
+                        color: AppColors.black,
+                        size: 16.sp,
+                      ),
                     ),
+                  );
+                }
+
+                final raw = snapshot.data!.snapshot.value;
+
+                if (raw is! Map) {
+                  return Center(
+                    child: Text(
+                      'Invalid table data',
+                      style: StyleHelper.customStyle(
+                        color: AppColors.black,
+                        size: 16.sp,
+                      ),
+                    ),
+                  );
+                }
+
+                final map = Map<String, dynamic>.from(raw);
+
+                final tables = map.entries
+                    .where((e) => e.value is Map)
+                    .map((e) => RestaurantTableModel.fromMap(
+                  e.key,
+                  Map<String, dynamic>.from(e.value as Map),
+                ))
+                    .toList()
+                  ..sort((a, b) => int.parse(a.tableNo)
+                      .compareTo(int.parse(b.tableNo)));
+
+                return GridView.builder(
+                  itemCount: tables.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 5,
+                    mainAxisSpacing: 10.h,
+                    crossAxisSpacing: 5.w,
+                    childAspectRatio: 0.80,
                   ),
-                ],
-                   ).paddingSymmetric(horizontal: 16.w,vertical: 16.h),
+                  itemBuilder: (context, index) {
+                    final table = tables[index];
+                    return buildTableCard(table);
+                  },
+                ).paddingSymmetric(horizontal: 8.w);
+              },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildHeader() {
+    return Container(
+      padding: EdgeInsets.only(left: 10.w, top: 20.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Restaurant',
+                style: StyleHelper.customStyle(
+                  color: AppColors.black,
+                  size: 10.sp,
+                  family: semiBold,
+                ),
+              ).paddingOnly(bottom: 4.h),
+              GestureDetector(
+                onTap: () {},
+                child: Text(
+                  'Monday, 20 March, 2023',
+                  style: StyleHelper.customStyle(
+                    color: AppColors.black.withOpacity(0.8),
+                    size: 7.sp,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTableCard(RestaurantTableModel table) {
+    final bool isAvailable = table.status == 'available';
+
+    return GestureDetector(
+      onTap: () {
+        if (isAvailable) {
+          editTableDialog(context, table);
+        } else {
+         Get.to(()=>MenuScreen(tableId: table.id));
+        }
+      },
+      child: SizedBox(
+        width: double.infinity,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: [
+            // Main Card Container
+            Container(
+              width: double.infinity,
+              margin: EdgeInsets.only(top: 30.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isAvailable
+                      ? [Color(0xFF2d4875), Color(0xFF1a2847)]
+                      : [Color(0xFFff6b6b), Color(0xFFee5a6f)],
+                ),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(
+                  color: isAvailable
+                      ? Color(0xFF4a6fa5).withOpacity(0.5)
+                      : Colors.red.shade300.withOpacity(0.5),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isAvailable ? Colors.blue : Colors.red)
+                        .withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    isAvailable ? 'Free Table' : 'Occupied',
+                    textAlign: TextAlign.center,
+                    style: StyleHelper.customStyle(
+                      color: AppColors.white,
+                      size: 6.sp,
+                      family: semiBold,
+                    ),
+                  ).paddingOnly(bottom: 4.h, top: 20.h),
+                  Text(
+                    isAvailable ? 'Waiting for God!' : 'In Use',
+                    textAlign: TextAlign.center,
+                    style: StyleHelper.customStyle(
+                      color: AppColors.white.withOpacity(0.9),
+                      size: 5.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Table Number Circle
+            Positioned(
+              top: 15.h,
+              child: Container(
+                width: 60.w,
+                height: 60.h,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFffb3b3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  table.tableNo,
+                  style: StyleHelper.customStyle(
+                    color: AppColors.black,
+                    size: 10.sp,
+                    family: semiBold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -123,102 +236,95 @@ class _HomeScreenState extends State<HomeScreen> {
     final capacityController =
     TextEditingController(text: table.capacityPeople.toString());
     String status = table.status;
-
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Edit Table ${table.tableNo}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: capacityController,
-              keyboardType: TextInputType.number,
-            ),
-            DropdownButton<String>(
-              value: status,
-              items: ['available', 'booked']
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (v) => status = v!,
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () async {
-              final updated = table.copyWith(
-                capacityPeople:
-                int.tryParse(capacityController.text) ?? table.capacityPeople,
-                status: status,
-              );
-
-              await homeController.updateTable(updated);
-              Get.back();
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void showTableCreateDialog(BuildContext context) {
-    final TextEditingController tableCountController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
           backgroundColor: AppColors.white,
-          title: Text('Create Restaurant Tables',textAlign: TextAlign.center,),
-          content: TextField(
-            controller: tableCountController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Number of tables', hintText: 'Enter number of tables'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Text(
+            'Edit Table ${table.tableNo}',
+            style: StyleHelper.customStyle(
+              color: AppColors.black,
+              size: 18.sp,
+              family: semiBold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: capacityController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Capacity',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              DropdownButtonFormField<String>(
+                value: status,
+                decoration: InputDecoration(
+                  labelText: 'Status',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                items: ['available', 'booked']
+                    .map((e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e.capitalizeFirst!),
+                ))
+                    .toList(),
+                onChanged: (v) {
+                  setState(() {
+                    status = v!;
+                  });
+                },
+              ),
+            ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: StyleHelper.customStyle(color: AppColors.black, size: 8.sp, family: medium)),
+              child: Text(
+                'Cancel',
+                style: StyleHelper.customStyle(
+                  color: Colors.grey,
+                  size: 6.sp,
+                ),
+              ),
             ),
-            TextButton(
-              onPressed: () {
-                final count = int.tryParse(tableCountController.text);
-                if (count != null && count > 0) {
-                  homeController.createRestaurantTables(count);
-                  Navigator.pop(context);
-                }
+            ElevatedButton(
+              onPressed: () async {
+                final updated = table.copyWith(
+                  capacityPeople: int.tryParse(capacityController.text) ??
+                      table.capacityPeople,
+                  status: status,
+                );
+                await homeController.updateTable(updated);
+                Get.back();
               },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-                decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(12.r)),
-                child: Text('Create', style: StyleHelper.customStyle(color: AppColors.white, size: 8.sp, family: medium)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF2d4875),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+              child: Text(
+                'Save',
+                style: StyleHelper.customStyle(
+                  color: AppColors.white,
+                  size: 6.sp,
+                ),
               ),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  Widget buildItem({required String icon,required String name,}){
-    return GestureDetector(
-      onTap: (){
-        homeController.selectedTab.value = name;
-      },
-      child: Obx(()=> Container(
-        padding: EdgeInsets.all(12.sp),
-        decoration: BoxDecoration(
-          color: homeController.selectedTab.value == name?AppColors.white:AppColors.black
         ),
-        child: Column(
-          children: [
-            Image.asset(icon,height: 16.h,width: 16.w,color:  homeController.selectedTab.value == name ? AppColors.black : AppColors.lightGray,fit: BoxFit.contain),
-            Text(name,style: StyleHelper.customStyle(color:  homeController.selectedTab.value == name ? AppColors.black : AppColors.lightGray,size: 4.sp,family: medium)),
-          ],
-        ),
-      ),
       ),
     );
   }

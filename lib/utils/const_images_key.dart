@@ -58,5 +58,6 @@ class AppImages {
   static const String icEmployee  = '${icons}ic_employee.png';
   static const String icVehicle  = '${icons}ic_vehicle_2.png';
   static const String icService  = '${icons}ic_service_2.png';
+  static const String icMenu  = '${icons}ic_menu.png';
 
 }

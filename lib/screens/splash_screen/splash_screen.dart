@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/screens/authentication/login_screen/log_in_screen.dart';
-import 'package:restaurant_management_fierbase/screens/main_screen/main_screen.dart';
+import 'package:restaurant_management_fierbase/screens/main_layout_screen/main_layout_screen.dart';
 import 'package:restaurant_management_fierbase/utils/const_images_key.dart';
 import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 
@@ -21,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
     bool isLogin = getStorage.read(IS_LOGIN) ?? false;
     Future.delayed(const Duration(seconds: 2), () {
       if (isLogin) {
-        Get.offAll(() => const MainScreen());
+        Get.offAll(() => const MainLayoutScreen());
       } else {
         Get.offAll(() => const LogInScreen());
       }

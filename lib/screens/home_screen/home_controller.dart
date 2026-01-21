@@ -6,6 +6,7 @@ import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 class HomeController extends GetxController {
 
   RxString selectedTab = "home".obs;
+  RxInt currentScreenIndex = 0.obs;
 
   Future<void> createRestaurantTables(int count) async {
     debugPrint("Last Table NO:::::::::${getLastTableNumber()}");
