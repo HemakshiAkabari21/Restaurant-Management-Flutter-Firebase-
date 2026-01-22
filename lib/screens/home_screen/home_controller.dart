@@ -9,15 +9,15 @@ class HomeController extends GetxController {
   RxInt currentScreenIndex = 0.obs;
 
   Future<void> createRestaurantTables(int count) async {
-    debugPrint("Last Table NO:::::::::${getLastTableNumber()}");
     final lastTableNo = await getLastTableNumber();
+    debugPrint("Last Table NO:::::::::$lastTableNo");
 
     for (int i = 1; i <= count; i++) {
       final newTableNo = lastTableNo + i;
 
       final model = RestaurantTableModel(
         id: '',
-        tableNo: (lastTableNo + i).toString(),
+        tableNo: (lastTableNo + i),
         capacityPeople: 4,
         status: 'available',
       );
@@ -31,16 +31,16 @@ class HomeController extends GetxController {
 
   Future<int> getLastTableNumber() async {
     final snapshot = await RealtimeDbHelper.instance.ref('restaurant_tables').orderByChild('table_no').limitToLast(1).get();
-
     if (!snapshot.exists || snapshot.value == null) return 0;
 
     final map = snapshot.value as Map<dynamic, dynamic>;
     final last = map.values.first;
 
     if (last is! Map) return 0;
-
+    debugPrint("Last Table No in get last table number::::::::::::${last['table_no'].toString()}");
     return int.tryParse(last['table_no'].toString()) ?? 0;
   }
+
 
   Future<List<RestaurantTableModel>> getTablesOnce() async {
     final snapshot = await RealtimeDbHelper.instance.ref('restaurant_tables').orderByChild('table_no').get();

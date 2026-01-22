@@ -22,75 +22,70 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(color: AppColors.white),
-      child: Column(
-        children: [
-          // Header
-          buildHeader(),
-
-          // Table Grid
-          Expanded(
-            child: StreamBuilder<DatabaseEvent>(
-              stream: RealtimeDbHelper.instance
-                  .listenToData('restaurant_tables'),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData ||
-                    snapshot.data!.snapshot.value == null) {
-                  return Center(
-                    child: Text(
-                      'No tables created yet',
-                      style: StyleHelper.customStyle(
-                        color: AppColors.black,
-                        size: 16.sp,
-                      ),
-                    ),
-                  );
-                }
-
-                final raw = snapshot.data!.snapshot.value;
-
-                if (raw is! Map) {
-                  return Center(
-                    child: Text(
-                      'Invalid table data',
-                      style: StyleHelper.customStyle(
-                        color: AppColors.black,
-                        size: 16.sp,
-                      ),
-                    ),
-                  );
-                }
-
-                final map = Map<String, dynamic>.from(raw);
-
-                final tables = map.entries
-                    .where((e) => e.value is Map)
-                    .map((e) => RestaurantTableModel.fromMap(
-                  e.key,
-                  Map<String, dynamic>.from(e.value as Map),
-                ))
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(color: AppColors.white),
+        child: Column(
+          children: [
+            /// Header
+            buildHeader(),
+      
+            /// Table Grid
+            Expanded(
+              child: StreamBuilder<DatabaseEvent>(
+                stream: RealtimeDbHelper.instance.listenToData('restaurant_tables'),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+                    return Center(child: Text('No tables created yet', style: StyleHelper.customStyle(color: AppColors.black, size: 10.sp,),),);
+                  }
+                  final raw = snapshot.data!.snapshot.value;
+                  if (raw is! Map) {
+                    return Center(child: Text('Invalid table data', style: StyleHelper.customStyle(color: AppColors.black, size: 10.sp,),),);
+                  }
+                  final map = Map<String, dynamic>.from(raw);
+                  debugPrint("Snapshot::::::::::$raw");
+                  final tables = map.entries.where((e) => e.value is Map).map((e) => RestaurantTableModel.fromMap(
+                    e.key, Map<String, dynamic>.from(e.value as Map),))
                     .toList()
-                  ..sort((a, b) => int.parse(a.tableNo)
-                      .compareTo(int.parse(b.tableNo)));
-
-                return GridView.builder(
-                  itemCount: tables.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 5,
-                    mainAxisSpacing: 10.h,
-                    crossAxisSpacing: 5.w,
-                    childAspectRatio: 0.80,
-                  ),
-                  itemBuilder: (context, index) {
-                    final table = tables[index];
-                    return buildTableCard(table);
-                  },
-                ).paddingSymmetric(horizontal: 8.w);
-              },
+                    ..sort((a, b) => a.tableNo
+                     .compareTo(b.tableNo));
+      
+                  return GridView.builder(
+                    itemCount: tables.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5,
+                      mainAxisSpacing: 10.h,
+                      crossAxisSpacing: 5.w,
+                      childAspectRatio: 0.80,
+                    ),
+                    itemBuilder: (context, index) {
+                      final table = tables[index];
+                      return buildTableCard(table);
+                    },
+                  ).paddingSymmetric(horizontal: 8.w);
+                },
+              ),
             ),
+            SizedBox(height: 10.h,)
+          ],
+        ),
+      ),
+      floatingActionButton: GestureDetector(
+          onTap: (){showTableCreateDialog(context);},
+        child: Container(
+          height: 50.h,
+          width: 50.w,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [  BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, -4), blurRadius: 20, spreadRadius: 0,),],
+            gradient:LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFff6b6b), Color(0xFFee5a6f)],
+            )
           ),
-        ],
+          child: Icon(Icons.add,size: 14.sp,color: AppColors.white,),
+        ) ,
       ),
     );
   }
@@ -217,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 child: Text(
-                  table.tableNo,
+                  '${table.tableNo}',
                   style: StyleHelper.customStyle(
                     color: AppColors.black,
                     size: 10.sp,
@@ -248,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
             'Edit Table ${table.tableNo}',
             style: StyleHelper.customStyle(
               color: AppColors.black,
-              size: 18.sp,
+              size: 8.sp,
               family: semiBold,
             ),
           ),
@@ -326,6 +321,69 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void showTableCreateDialog(BuildContext context) {
+    final TextEditingController tableCountController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.white,
+          title: Text('Create Restaurant Tables',textAlign: TextAlign.center,),
+          content: TextField(
+            controller: tableCountController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: 'Number of tables', hintText: 'Enter number of tables'),
+          ),
+          actions: [
+    /*        TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: StyleHelper.customStyle(color: AppColors.black, size: 14.sp, family: medium)),
+            ),
+            TextButton(
+              onPressed: () {
+                final count = int.tryParse(tableCountController.text);
+                if (count != null && count > 0) {
+                  homeController.createRestaurantTables(count);
+                  Navigator.pop(context);
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(12.r)),
+                child: Text('Create', style: StyleHelper.customStyle(color: AppColors.white, size: 14.sp, family: medium)),
+              ),
+            ),*/
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: StyleHelper.customStyle(
+                  color: Colors.grey,
+                  size: 6.sp,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final count = int.tryParse(tableCountController.text);
+                if (count != null && count > 0) {
+                  homeController.createRestaurantTables(count);
+                  Navigator.pop(context);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF2d4875),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r),),
+              ),
+              child: Text('Create', style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp,),),
+            ),
+          ],
+        );
+      },
     );
   }
 }

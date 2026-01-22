@@ -90,7 +90,7 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
         // width: 200,
         child: Container(
           decoration: BoxDecoration(
-           color: AppColors.disableButton
+           color: Colors.grey.shade50,
           ),
           child: Column(
             children: [
@@ -166,7 +166,7 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
         }
         return GridView.count(
           crossAxisCount: 3,
-          childAspectRatio: 1.2,
+          childAspectRatio: 2,
           children: snap.data!.map((m) {
             return Card(
               child: Container(
@@ -295,6 +295,7 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
             return Card(
               child: Container(
                 alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(horizontal: 6.w),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.r),
                   gradient: LinearGradient(
@@ -317,27 +318,15 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                       selectedCategoryForProduct = category;
                     });
                   },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "₹${p.price}",
-                        style: StyleHelper.customStyle(
-                          color: AppColors.white,
-                          size: 6.sp,
-                          family: semiBold,
-                        ),
-                      ),
-                      Text(
-                        p.name,
-                        style: StyleHelper.customStyle(
-                          color: AppColors.white,
-                          size: 6.sp,
-                          family: semiBold,
-                        ),
-                      ).paddingOnly(left: 2.w),
-                    ],
-                  ),
+                  child:  Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text("₹${p.price}", style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp, family: semiBold,), textAlign: TextAlign.center,).paddingOnly(bottom: 4.h),
+                    Text(p.name, maxLines: 2, softWrap: true, textAlign: TextAlign.center, overflow: TextOverflow.visible, style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp, family: semiBold,),),
+                  ],
+                ),
+
                 ),
               ),
             );
@@ -395,13 +384,24 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 24.h),
-        Text(
-          selectedMaster != null ? "Edit Master Category" : "Add Master Category",
-          style: StyleHelper.customStyle(
-            color: Color(0xFF1a2847),
-            size: 8.sp,
-            family: semiBold,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(selectedMaster != null ? "Edit Master Category" : "Add Master Category",
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: StyleHelper.customStyle(color: const Color(0xFF1a2847), size: 8.sp, family: semiBold,),
+              ),
+            ),
+            if(selectedMaster != null)
+            GestureDetector(
+              onTap: () {
+                selectedMaster = null;
+                nameCtrl.clear();
+                uploadedImageUrl= null;
+              },
+              child: Icon(Icons.close, size: 6.sp),
+            ),
+          ],
         ),
         SizedBox(height: 24.h),
         Expanded(
@@ -413,20 +413,16 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                   controller: nameCtrl,
                   decoration: InputDecoration(
                     labelText: "Name",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r),),
                     filled: true,
                     fillColor: Colors.white,
                   ),
-                ),
-                SizedBox(height: 16.h),
+                ).paddingOnly(bottom: 16.h),
                 if (uploadedImageUrl != null) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8.r),
                     child: Image.network(uploadedImageUrl!, height: 120.h, width: double.infinity, fit: BoxFit.cover),
-                  ),
-                  SizedBox(height: 12.h),
+                  ).paddingOnly(bottom: 12.h),
                 ],
                 OutlinedButton.icon(
                   onPressed: pickAndUploadImage,
@@ -510,13 +506,14 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 24.h),
-            Text(
-              selectedCategory != null ? "Edit Category" : "Add Category",
-              style: StyleHelper.customStyle(
-                color: Color(0xFF1a2847),
-                size: 8.sp,
-                family: semiBold,
-              ),
+            Row(
+              children: [
+                Text(
+                  selectedCategory != null ? "Edit Category" : "Add Category",
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: StyleHelper.customStyle(color: Color(0xFF1a2847), size: 8.sp, family: semiBold,),
+                ),
+              ],
             ),
             SizedBox(height: 24.h),
             Expanded(
