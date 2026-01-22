@@ -44,20 +44,6 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Row(
-        children: [
-          buildLeftOptions(),
-          buildCenterGrid(),
-          buildRightForm(),
-        ],
-      ).paddingSymmetric(vertical: 16.h),
-    );
-  }
-
   Future<void> pickAndUploadImage() async {
     final picker = ImagePicker();
     final XFile? pickedFile =
@@ -83,26 +69,64 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
     selectedCategoryForProduct = null;
   }
 
+  Future<List<ProductModel>> getAllProducts() async {
+    final snap = await RealtimeDbHelper.instance.ref('products').get();
+    if (!snap.exists) return [];
+
+    final map = snap.value as Map<dynamic, dynamic>;
+    return map.entries
+        .map((e) => ProductModel.fromMap(e.key, e.value))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Row(
+        children: [
+          buildLeftOptions(),
+          buildCenterGrid(),
+          buildRightForm(),
+        ],
+      ),
+    );
+  }
+
   Widget buildLeftOptions() {
     return Expanded(
       flex: 2,
       child: SizedBox(
-        // width: 200,
         child: Container(
           decoration: BoxDecoration(
            color: Colors.grey.shade50,
           ),
           child: Column(
             children: [
-              SizedBox(height: 20.h),
-              Text('MENU SETTINGS', style: StyleHelper.customStyle(color: AppColors.black,size: 6.sp, family: semiBold,),),
-              SizedBox(height: 30.h),
+              Container(
+                width: Get.width,
+                margin: EdgeInsets.only(bottom: 20.h),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF2d4875), Color(0xFF1a2847)],
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(height: 30.h),
+                    Text('MENU SETTINGS', style: StyleHelper.customStyle(color: AppColors.white,size: 6.sp, family: semiBold,),),
+                    SizedBox(height: 30.h),
+                  ],
+                ),
+              ),
               ...MenuSettingType.values.map((type) {
                 final isSelected = selectedType == type;
                 return Container(
                   margin: EdgeInsets.symmetric(horizontal: 6.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.black.withOpacity(0.2) : Colors.transparent,
+                    color: isSelected ? Color(0xFF1a2847): Colors.transparent,
                     borderRadius: BorderRadius.circular(8.r),
                     border: Border.all(
                       color: isSelected ? Colors.black : Colors.black.withOpacity(0.3),
@@ -114,7 +138,7 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                     title: Text(
                       type.name.toUpperCase(),
                       style: StyleHelper.customStyle(
-                        color: AppColors.black,
+                        color: isSelected?AppColors.white : AppColors.black,
                         size: 4.sp,
                         family: isSelected ? semiBold : regular,
                       ),
@@ -127,7 +151,7 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                 );
               }).toList(),
             ],
-          ).paddingSymmetric(vertical: 16.h),
+          ),
         ),
       ),
     );
@@ -136,9 +160,51 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
   Widget buildCenterGrid() {
     return Expanded(
       flex: 7,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: buildGridContent(),
+      child: Column(
+        children: [
+          Container(
+            width: Get.width,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2d4875), Color(0xFF1a2847), Color(0xFF1a2847), Color(0xFF1a2847)],
+              ),
+            ),
+            child: Column(
+              children: [
+                SizedBox(height: 30.h),
+                Text('MENU ITEMS', style: StyleHelper.customStyle(color: AppColors.white,size: 6.sp, family: semiBold,),textAlign: TextAlign.start,),
+                SizedBox(height: 30.h),
+              ],
+            ),
+          ),
+          Expanded(
+            child: buildGridContent().paddingSymmetric(horizontal: 2.w),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildRightForm() {
+    return Expanded(
+      flex: 3,
+      child: SizedBox(
+        //  width: 340,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: Offset(-2, 0),
+              ),
+            ],
+          ),
+          child: buildForm(),
+        ),
       ),
     );
   }
@@ -165,8 +231,10 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
           return const Center(child: Text("No master categories yet"));
         }
         return GridView.count(
-          crossAxisCount: 3,
-          childAspectRatio: 2,
+          crossAxisCount: 4,
+          childAspectRatio: 1,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
           children: snap.data!.map((m) {
             return Card(
               child: Container(
@@ -184,15 +252,29 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                     nameCtrl.text = m.name;
                     uploadedImageUrl = m.image.isNotEmpty ? m.image : null;
                   }),
-                  child: Center(
-                    child: Text(
-                      m.name,
-                      style: StyleHelper.customStyle(
-                        color: AppColors.white,
-                        size: 6.sp,
-                        family: semiBold,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(12),),),
+                          child: m.image.isNotEmpty
+                              ? ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(12),),
+                            child: Image.network(m.image, fit: BoxFit.cover, width: double.infinity,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 50, color: Colors.grey,),),)
+                              : const Icon(Icons.image, size: 50, color: Colors.grey,),
+                        ),
                       ),
-                    ),
+                      Expanded(
+                        flex: 1,
+                        child: Center(
+                          child: Text(m.name,   textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style:  StyleHelper.customStyle(size: 6.sp, color: AppColors.white,family: medium),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -214,10 +296,16 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
           return const Center(child: Text("No categories yet"));
         }
         return GridView.count(
-          crossAxisCount: 3,
-          childAspectRatio: 1.2,
+          crossAxisCount: 4,
+          childAspectRatio: 1,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
           children: snap.data!.map((c) {
             return Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.r),
@@ -243,12 +331,23 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        c.name,
-                        style: StyleHelper.customStyle(
-                          color: AppColors.white,
-                          size: 6.sp,
-                          family: semiBold,
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(12),),),
+                          child: c.image.isNotEmpty
+                              ? ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(12),),
+                            child: Image.network(c.image, fit: BoxFit.cover, width: double.infinity,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 50, color: Colors.grey,),),)
+                              : const Icon(Icons.image, size: 50, color: Colors.grey,),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Center(
+                          child: Text(c.name,textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style:  StyleHelper.customStyle(size: 6.sp, color: AppColors.white,family: medium),
+                          ),
                         ),
                       ),
                     ],
@@ -289,10 +388,13 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
           );
         }
         return GridView.count(
-          crossAxisCount: 3,
-          childAspectRatio: 1.2,
+          crossAxisCount: 4,
+          childAspectRatio:0.85,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
           children: snap.data!.map((p) {
-            return Card(
+            return buildProductCard(p);
+              /*Card(
               child: Container(
                 alignment: Alignment.center,
                 padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -327,42 +429,99 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                   ],
                 ),
 
-                ),
+                )
               ),
-            );
+            );*/
           }).toList(),
         );
       },
     );
   }
 
-  Future<List<ProductModel>> getAllProducts() async {
-    final snap = await RealtimeDbHelper.instance.ref('products').get();
-    if (!snap.exists) return [];
+  Widget buildProductCard(ProductModel product) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () async{
+          // Get the category for this product
+          final categories = await RealtimeDbHelper.instance.getCategories();
+          final category = categories.firstWhereOrNull((c) => c.id == product.categoryId);
 
-    final map = snap.value as Map<dynamic, dynamic>;
-    return map.entries
-        .map((e) => ProductModel.fromMap(e.key, e.value))
-        .toList();
-  }
-
-  Widget buildRightForm() {
-    return Expanded(
-      flex: 3,
-      child: SizedBox(
-      //  width: 340,
+          setState(() {
+            selectedProduct = product;
+            nameCtrl.text = product.name;
+            priceCtrl.text = product.price;
+            uploadedImageUrl = product.image.isNotEmpty ? product.image : null;
+            selectedCategoryForProduct = category;
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: Offset(-2, 0),
+            gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: /*isAvailable*/
+                /*?*/ [Color(0xFF2d4875), Color(0xFF1a2847)]
+              // : [Color(0xFFff6b6b), Color(0xFFee5a6f)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                  ),
+                  child: product.image != null && product.image!.isNotEmpty
+                      ? ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                    child: Image.network(
+                      product.image,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.fastfood,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  )
+                      : const Icon(
+                    Icons.fastfood,
+                    size: 50,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+              Padding(
+                padding:  EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(product.name, style:  StyleHelper.customStyle(size: 4.sp, family: medium,color: AppColors.white), maxLines: 2, overflow: TextOverflow.ellipsis,),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("₹${product.price}", style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white,),),
+                      ],
+                    ).paddingOnly(top: 4.h),
+                  ],
+                ),
               ),
             ],
           ),
-          child: buildForm(),
         ),
       ),
     );
@@ -383,27 +542,34 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 24.h),
-        Row(
-          children: [
-            Expanded(
-              child: Text(selectedMaster != null ? "Edit Master Category" : "Add Master Category",
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: StyleHelper.customStyle(color: const Color(0xFF1a2847), size: 8.sp, family: semiBold,),
+        Container(
+          margin: EdgeInsets.only(bottom: 20.h),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2d4875), Color(0xFF1a2847), Color(0xFF1a2847), Color(0xFF1a2847)]
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    SizedBox(height: 30.h),
+                    Text(selectedMaster != null ? "EDIT M. CATEGORY" : "ADD M. CATEGORY",
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp, family: semiBold,),
+                    ),
+                    SizedBox(height: 20.h),
+                  ],
+                ),
               ),
-            ),
-            if(selectedMaster != null)
-            GestureDetector(
-              onTap: () {
-                selectedMaster = null;
-                nameCtrl.clear();
-                uploadedImageUrl= null;
-              },
-              child: Icon(Icons.close, size: 6.sp),
-            ),
-          ],
+              if(selectedMaster != null)
+              GestureDetector(onTap: () {resetForm();}, child: Icon(Icons.close, size: 6.sp,color: AppColors.white,),),
+            ],
+          ).paddingSymmetric(horizontal: 6.w,vertical: 5.h),
         ),
-        SizedBox(height: 24.h),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
@@ -436,7 +602,7 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                   ),
                 ),
               ],
-            ),
+            ).paddingSymmetric(horizontal: 6.w,vertical: 6.h),
           ),
         ),
         SizedBox(height: 16.h),
@@ -487,16 +653,16 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
             ),
           ),
           child: Text(
-            selectedMaster != null ? "Update Master Category" : "Save Master Category",
+            selectedMaster != null ? "Update M. Category" : "Save M. Category",
             style: StyleHelper.customStyle(
               color: AppColors.white,
               size: 6.sp,
               family: semiBold,
             ),
           ),
-        ),
+        ).paddingSymmetric(horizontal: 6.w,vertical: 6.h),
       ],
-    ).paddingSymmetric(horizontal: 6.w,vertical: 6.h);
+    );
   }
 
   Widget buildCategoryForm() {
@@ -505,17 +671,28 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 24.h),
-            Row(
-              children: [
-                Text(
-                  selectedCategory != null ? "Edit Category" : "Add Category",
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: StyleHelper.customStyle(color: Color(0xFF1a2847), size: 8.sp, family: semiBold,),
+            Container(
+              margin: EdgeInsets.only(bottom: 20.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF2d4875), Color(0xFF1a2847), Color(0xFF1a2847), Color(0xFF1a2847)]
                 ),
-              ],
+              ),
+              child: Row(
+                  children: [
+                    Expanded(
+                      child: Text( selectedCategory != null ? "EDIT CATEGORY" : "ADD CATEGORY",
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp, family: semiBold,),
+                      ).paddingOnly(top: 30.h,bottom: 20.h),
+                    ),
+                    if(selectedMaster != null)
+                      GestureDetector(onTap: () {resetForm();}, child: Icon(Icons.close, size: 6.sp,color: AppColors.white),),
+                  ],
+                ).paddingSymmetric(horizontal: 6.w,vertical: 5.h)
             ),
-            SizedBox(height: 24.h),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -573,7 +750,7 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                       ),
                     ),
                   ],
-                ),
+                ).paddingSymmetric(horizontal: 6.w,vertical: 6.h),
               ),
             ),
             SizedBox(height: 16.h),
@@ -640,9 +817,9 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                   family: semiBold,
                 ),
               ),
-            ),
+            ).paddingSymmetric(horizontal: 6.w,vertical: 8.h),
           ],
-        ).paddingSymmetric(horizontal: 6.w,vertical: 8.h);
+        );
       },
     );
   }
@@ -653,16 +830,34 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 24.h),
-            Text(
-              selectedProduct != null ? "Edit Product" : "Add Product",
-              style: StyleHelper.customStyle(
-                color: Color(0xFF1a2847),
-                size: 8.sp,
-                family: semiBold,
+            Container(
+              margin: EdgeInsets.only(bottom: 20.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF2d4875), Color(0xFF1a2847), Color(0xFF1a2847)]
+                ),
               ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 30.h),
+                        Text( selectedProduct != null ? "EDIT PRODUCT" : "ADD PRODUCT",
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp, family: semiBold,),
+                        ),
+                        SizedBox(height: 20.h),
+                      ],
+                    ),
+                  ),
+                  if(selectedMaster != null)
+                    GestureDetector(onTap: () {resetForm();}, child: Icon(Icons.close, size: 6.sp,color: AppColors.white),),
+                ],
+              ).paddingSymmetric(horizontal: 6.w,vertical: 5.h),
             ),
-            SizedBox(height: 24.h),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -733,7 +928,7 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                       ),
                     ),
                   ],
-                ),
+                ).paddingSymmetric(horizontal: 6.w,vertical: 6.h),
               ),
             ),
             SizedBox(height: 16.h),
@@ -801,9 +996,9 @@ class _MenuSettingScreenState extends State<MenuSettingScreen> {
                   family: semiBold,
                 ),
               ),
-            ),
+            ).paddingSymmetric(horizontal: 6.w,vertical: 6.h),
           ],
-        ).paddingSymmetric(horizontal: 6.w,vertical: 8.h);
+        );
       },
     );
   }

@@ -40,14 +40,21 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: Color(0xFF2d4875),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Fixed Sidebar
           Container(
             width: 40.w,
-            color: AppColors.black,
+           // color: AppColors.black,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2d4875), Color(0xFF1a2847)]
+              ),
+            ),
             padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 8.w),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -109,11 +116,11 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
             borderRadius: BorderRadius.circular(12.r),
             color: index == currentIndex.value
                 ? Color(0xFFffb3b3)
-                : AppColors.black,
+                : Color(0xFF1a2847),
             border: Border.all(
               color:  index == currentIndex.value
-                  ? Color(0xFFffb3b3)
-                  : Colors.grey.shade800,
+                  ? AppColors.black
+                  : Colors.white,
               width: 2,
             ),
           ),

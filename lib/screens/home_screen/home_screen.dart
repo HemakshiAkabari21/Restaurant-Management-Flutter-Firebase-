@@ -43,7 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Center(child: Text('Invalid table data', style: StyleHelper.customStyle(color: AppColors.black, size: 10.sp,),),);
                   }
                   final map = Map<String, dynamic>.from(raw);
-                  debugPrint("Snapshot::::::::::$raw");
                   final tables = map.entries.where((e) => e.value is Map).map((e) => RestaurantTableModel.fromMap(
                     e.key, Map<String, dynamic>.from(e.value as Map),))
                     .toList()
@@ -92,7 +91,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget buildHeader() {
     return Container(
-      padding: EdgeInsets.only(left: 10.w, top: 20.h),
+      padding: EdgeInsets.only(left: 10.w, top: 20.h,bottom: 5.h),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF2d4875), Color(0xFF1a2847)]
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -102,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'Restaurant',
                 style: StyleHelper.customStyle(
-                  color: AppColors.black,
+                  color: AppColors.white,
                   size: 10.sp,
                   family: semiBold,
                 ),
@@ -112,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Text(
                   'Monday, 20 March, 2023',
                   style: StyleHelper.customStyle(
-                    color: AppColors.black.withOpacity(0.8),
+                    color: AppColors.white.withOpacity(0.8),
                     size: 7.sp,
                   ),
                 ),

@@ -25,6 +25,8 @@ class _MenuScreenState extends State<MenuScreen> {
   MasterCategoryModel? selectedMaster;
   CategoryModel? selectedCategory;
   List<CartItemModel> cartItems = [];
+  String? expandedMasterId;
+  List<MasterCategoryModel> leftMasters = [];
 
   late Future<List<MasterCategoryModel>> masterFuture;
 
@@ -32,7 +34,13 @@ class _MenuScreenState extends State<MenuScreen> {
   void initState() {
     super.initState();
     masterFuture = RealtimeDbHelper.instance.getMasterCategories();
+    loadLeftMasters();
     loadCart();
+  }
+
+  Future<void> loadLeftMasters() async {
+    leftMasters = await RealtimeDbHelper.instance.getMasterCategories();
+    setState(() {});
   }
 
   Future<void> loadCart() async {
@@ -64,11 +72,110 @@ class _MenuScreenState extends State<MenuScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            width: Get.width,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF2d4875), Color(0xFF1a2847)],
+              ),
+            ),
+            child: const Text(
+              "Categories",
+              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+
+          Expanded(
+            child: ListView.builder(
+              itemCount: leftMasters.length,
+              itemBuilder: (_, i) {
+                final master = leftMasters[i];
+                final isExpanded = expandedMasterId == master.id;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      title: Text(master.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
+                      onTap: () async {
+                        setState(() {
+                          expandedMasterId = isExpanded ? null : master.id;
+                          selectedMaster = master;
+                          selectedCategory = null; // reset category initially
+                          currentLevel = MenuLevel.product; // show products in center
+                        });
+
+                        if (!isExpanded) {
+                          // Fetch categories for this master
+                          final categories = await RealtimeDbHelper.instance.getCategoriesByMaster(master.id);
+                          if (categories.isNotEmpty) {
+                            // Automatically select the first category
+                            setState(() {
+                              selectedCategory = categories.first;
+                            });
+                          }
+                        }
+                      },
+                    ),
+                    if (isExpanded)
+                      FutureBuilder<List<CategoryModel>>(
+                        future: RealtimeDbHelper.instance.getCategoriesByMaster(master.id),
+                        builder: (_, snap) {
+                          if (!snap.hasData) {
+                            return const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          return Column(
+                            children: snap.data!.map((cat) {
+                              return SizedBox(
+                                height: 150,
+                                child: buildGridCard(
+                                  title: cat.name,
+                                  imageUrl: cat.image,
+                                  onTap: () {
+                                    setState(() {
+                                      selectedCategory = cat;
+                                      currentLevel = MenuLevel.product;
+                                    });
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /* Widget buildLeftPanel() {
+    return Container(
+      width: 220,
+      color: Colors.grey.shade100,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           // Header
           Container(
             padding: const EdgeInsets.all(16),
             width: Get.width,
-            color: AppColors.black,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2d4875), Color(0xFF1a2847), Color(0xFF1a2847), Color(0xFF1a2847)]
+              ),
+            ),
             child: const Text(
               "Menu Navigation",
               style: TextStyle(
@@ -140,7 +247,7 @@ class _MenuScreenState extends State<MenuScreen> {
         ],
       ),
     );
-  }
+  }*/
 
   /// CENTER PANEL - Shows grid of current level items
   Widget buildCenterPanel() {
@@ -153,7 +260,13 @@ class _MenuScreenState extends State<MenuScreen> {
             // Header showing current level
             Container(
               padding: const EdgeInsets.all(16),
-              color: AppColors.black,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF2d4875), Color(0xFF1a2847), Color(0xFF1a2847), Color(0xFF1a2847)]
+                ),
+              ),
               child: Row(
                 children: [
                   Icon(
@@ -162,7 +275,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         : currentLevel == MenuLevel.category
                         ? Icons.category
                         : Icons.fastfood,
-                    color: Colors.blue.shade700,
+                    color: Colors.white,
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -194,7 +307,7 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  Widget buildGridContent() {
+/*  Widget buildGridContent() {
     switch (currentLevel) {
       case MenuLevel.master:
         return buildMasterGrid();
@@ -203,10 +316,69 @@ class _MenuScreenState extends State<MenuScreen> {
       case MenuLevel.product:
         return buildProductGrid();
     }
+  }*/
+
+  Widget buildGridContent() {
+    if (selectedCategory != null) {
+      return buildProductGrid();
+    }
+    return buildMasterGrid();
   }
 
   // Grid for Master Categories
   Widget buildMasterGrid() {
+    return FutureBuilder<List<MasterCategoryModel>>(
+      future: RealtimeDbHelper.instance.getMasterCategories(),
+      builder: (_, snap) {
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snap.data!.isEmpty) {
+          return const Center(child: Text("No master categories available"));
+        }
+
+        return GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            childAspectRatio: 1,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: snap.data!.length,
+          itemBuilder: (context, index) {
+            final master = snap.data![index];
+            return buildGridCard(
+              title: master.name,
+              imageUrl: master.image,
+              onTap: () async {
+                // Update selected master
+                setState(() {
+                  selectedMaster = master;
+                  expandedMasterId = master.id; // expand in left panel
+                  currentLevel = MenuLevel.product; // show products
+                  selectedCategory = null; // reset category initially
+                });
+
+                // Load categories for this master
+                final categories =
+                await RealtimeDbHelper.instance.getCategoriesByMaster(master.id);
+
+                if (categories.isNotEmpty) {
+                  // Automatically select first category
+                  setState(() {
+                    selectedCategory = categories.first;
+                  });
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /* Widget buildMasterGrid() {
     return FutureBuilder<List<MasterCategoryModel>>(
       future: RealtimeDbHelper.instance.getMasterCategories(),
       builder: (_, snap) {
@@ -243,7 +415,7 @@ class _MenuScreenState extends State<MenuScreen> {
         );
       },
     );
-  }
+  }*/
 
   // Grid for Categories
   Widget buildCategoryGrid() {
@@ -326,7 +498,7 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  // Reusable grid card widget
+  // grid card widget
   Widget buildGridCard({required String title, String? imageUrl, required VoidCallback onTap,}) {
     return Card(
       elevation: 2,
@@ -494,7 +666,13 @@ class _MenuScreenState extends State<MenuScreen> {
       child: Column(
         children: [
           Container(
-            color: AppColors.black,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2d4875), Color(0xFF1a2847), Color(0xFF1a2847), Color(0xFF1a2847)]
+              ),
+            ),
             width: Get.width,
             padding:  EdgeInsets.all(4.sp),
             child: Column(
@@ -554,14 +732,14 @@ class _MenuScreenState extends State<MenuScreen> {
             onPressed: cartItems.isEmpty ? null : placeOrder,
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 45),
-              backgroundColor: AppColors.black
+              backgroundColor: Color(0xFF1a2847)
             ),
             child: Text("Place Order",style: StyleHelper.customStyle(color: AppColors.white,size: 4.sp,family: bold),),
           ),
           const SizedBox(height: 8),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.black,
+              backgroundColor: Color(0xFF1a2847),
               minimumSize: const Size(double.infinity, 45),
             ),
             onPressed: cartItems.isEmpty ? null : generateBill,
