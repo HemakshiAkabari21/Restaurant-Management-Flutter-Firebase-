@@ -9,7 +9,6 @@ import 'package:get/get_navigation/src/routes/default_route.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:restaurant_management_fierbase/push_notification.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:restaurant_management_fierbase/screens/authentication/login_screen/log_in_screen.dart';
 import 'package:restaurant_management_fierbase/screens/splash_screen/splash_screen.dart';
 import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 import 'package:restaurant_management_fierbase/utils/const_local_string.dart';
