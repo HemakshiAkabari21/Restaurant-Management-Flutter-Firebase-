@@ -1,29 +1,31 @@
 class CartItemModel {
   final String productId;
   final String productName;
-  final String productPrice;
-  final int qty;
+  final double productPrice;
+  final int productQty;
   final int isHalf;
-  final String note;
+  final String productNote;
 
   CartItemModel({
     required this.productId,
     required this.productName,
     required this.productPrice,
-    required this.qty,
+    required this.productQty,
     required this.isHalf,
-    required this.note,
+    required this.productNote,
   });
 
-  /// Firebase → Model
-  factory CartItemModel.fromMap(Map<dynamic, dynamic> map) {
+  /// Firebase → Model (SAFE)
+  factory CartItemModel.fromMap(Map map) {
+    final data = Map<String, dynamic>.from(map);
+
     return CartItemModel(
-      productId: map['product_id'] ?? '',
-      productName: map['product_name'] ?? '',
-      productPrice: map['product_price'] ?? '0',
-      qty: map['product_qty'] ?? 0,
-      isHalf: map['is_half'] ?? 0,
-      note: map['product_note'] ?? '',
+      productId: data['product_id'] ?? '',
+      productName: data['product_name'] ?? '',
+      productPrice: (data['product_price'] as num?)?.toDouble() ?? 0.0,
+      productQty: data['product_qty'] ?? 0,
+      isHalf: data['is_half'] ?? 0,
+      productNote: data['product_note'] ?? '',
     );
   }
 
@@ -32,16 +34,16 @@ class CartItemModel {
     'product_id': productId,
     'product_name': productName,
     'product_price': productPrice,
-    'product_qty': qty,
+    'product_qty': productQty,
     'is_half': isHalf,
-    'product_note': note,
+    'product_note': productNote,
   };
 
-  ///  COPY WITH (IMPORTANT)
+  /// COPY WITH
   CartItemModel copyWith({
     String? productId,
     String? productName,
-    String? productPrice,
+    double? productPrice,
     int? qty,
     int? isHalf,
     String? note,
@@ -50,9 +52,9 @@ class CartItemModel {
       productId: productId ?? this.productId,
       productName: productName ?? this.productName,
       productPrice: productPrice ?? this.productPrice,
-      qty: qty ?? this.qty,
+      productQty: qty ?? this.productQty,
       isHalf: isHalf ?? this.isHalf,
-      note: note ?? this.note,
+      productNote: note ?? this.productNote,
     );
   }
 }

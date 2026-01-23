@@ -250,12 +250,25 @@ class RealtimeDbHelper {
     await ref(path).set(item.toMap());
   }
 
-  Future<List<CartItemModel>> getTableCartList(String tableId) async {
+/*  Future<List<CartItemModel>> getTableCartList(String tableId) async {
     final snap = await ref('carts/$tableId').get();
     if (!snap.exists) return [];
 
     final map = snap.value as Map<dynamic, dynamic>;
     return map.values.map((e) => CartItemModel.fromMap(e)).toList();
+  }*/
+
+
+  Future<List<CartItemModel>> getTableCartList(String tableId) async {
+    final snap = await ref('carts/$tableId').get();
+    if (!snap.exists) return [];
+
+    final rawMap = snap.value as Map<dynamic, dynamic>;
+
+    return rawMap.values.map((e) {
+      final itemMap = Map<String, dynamic>.from(e as Map);
+      return CartItemModel.fromMap(itemMap);
+    }).toList();
   }
 
   Future<int> getCartQty(String tableId, String productId) async {
@@ -283,7 +296,7 @@ class RealtimeDbHelper {
     required String customerName,
     required String customerMobile,
     required int isGst,
-    required String orderJson,
+    required String orderJson, required customerEmail,
   }) {
     return pushData(
       path: 'orders',

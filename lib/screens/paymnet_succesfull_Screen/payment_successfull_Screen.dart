@@ -6,7 +6,10 @@ import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
+import 'package:restaurant_management_fierbase/model/order_model.dart';
 import 'package:restaurant_management_fierbase/screens/main_layout_screen/main_layout_screen.dart';
+import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String tableId;
@@ -31,6 +34,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   /// CUSTOMER
   final customerNameCtrl = TextEditingController();
   final customerMobileCtrl = TextEditingController();
+  final customerEmailCtrl = TextEditingController();
 
   /// BILL CONFIG
   double serviceCharge = 0;
@@ -53,7 +57,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   /// ================= TOTALS =================
   double get subTotal => widget.cartItems.fold(
     0,
-        (sum, e) => sum + (double.parse(e.productPrice) * e.qty),
+        (sum, e) => sum + (e.productPrice * e.productQty),
   );
 
   double get gstAmount =>
@@ -112,18 +116,22 @@ class _PaymentScreenState extends State<PaymentScreen> {
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         backgroundColor:Color(0xFF1a2847),
-        title: Text(
-          "Billing & Payment",
-          style: StyleHelper.customStyle(
-            color: Colors.white,
-            size: 8.sp,
-            family: semiBold,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
+        title: Text("Billing & Payment", style: StyleHelper.customStyle(color: Colors.white, size: 8.sp, family: semiBold,)),
+        actions: [
+          GestureDetector(
+            onTap: () async {
+              if (!isValid()) return;
+              final orderModel = buildOrderModel();
+              final pdfFile = await InvoicePdf.generate(orderModel);
+              await Share.shareXFiles(
+                [XFile(pdfFile.path)],
+                subject: 'Invoice Preview',
+                text: 'Invoice preview',
+              );
+            },
+            child: Icon(Icons.inventory_outlined,size: 16.sp,color: AppColors.white,),
+        )],
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Get.back(),),
       ),
       body: Column(
         children: [
@@ -158,6 +166,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 borderRadius: BorderRadius.circular(10.r)
                               )
                             ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: TextFormField(
+                            controller: customerEmailCtrl,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(hintText:"E-mail", border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r))),
                           ),
                         ),
                       ],
@@ -238,20 +254,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
           /// ITEMS
           ...widget.cartItems.map((item) {
-            final amount =
-                double.parse(item.productPrice) * item.qty;
+            final amount = item.productPrice * item.productQty;
             return Padding(
               padding: EdgeInsets.symmetric(vertical: 6.h),
               child: Row(
                 children: [
                   Expanded(flex: 4, child: Text(item.productName)),
                   Expanded(
-                    child: Text(item.qty.toString(),
+                    child: Text(item.productQty.toString(),
                         textAlign: TextAlign.center),
                   ),
                   Expanded(
                     child: Text(
-                      "₹${amount.toStringAsFixed(2)}",
+                      "₹${(amount).toStringAsFixed(2)}",
                       textAlign: TextAlign.right,
                     ),
                   ),
@@ -404,11 +419,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget billEditableRow(
-      String title,
-      double value,
-      Function(double) onChanged,
-      ) {
+  Widget billEditableRow(String title, double value, Function(double) onChanged,) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 6.h),
       child: Row(
@@ -472,8 +483,109 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  /// ================= CONFIRM PAYMENT =================
+  /// ================= CONFIRM PAYMENT =================\
+
+  bool isValid(){
+    if(customerNameCtrl.text.trim().isEmpty){
+      Get.snackbar("Error", "Please enter Customer Name", backgroundColor: Colors.red, colorText: Colors.white,);
+      return false;
+    }if(customerMobileCtrl.text.trim().isEmpty){
+      Get.snackbar("Error", "Please enter Customer Mobile Number", backgroundColor: Colors.red, colorText: Colors.white,);
+    }if(customerMobileCtrl.text.trim().length != 10){
+      Get.snackbar("Error", "Please enter valid Customer Number", backgroundColor: Colors.red, colorText: Colors.white,);
+    }if(customerEmailCtrl.text.trim().isEmpty){
+      Get.snackbar("Error", "Please enter Customer E-mail", backgroundColor: Colors.red, colorText: Colors.white,);
+    }/*if(isEmailValid(customerEmailCtrl.text.trim())){
+      Get.snackbar("Error", "Please enter valid Customer E-mail", backgroundColor: Colors.red, colorText: Colors.white,);
+    }*/
+    return true;
+  }
+
   Future<void> confirmPayment() async {
+
+    if(isValid()){
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+      try {
+
+        //  Create order in DB
+        final orderId = await RealtimeDbHelper.instance.createOrder(
+          orderTotal: grandTotal.toStringAsFixed(2),
+          customerName: customerNameCtrl.text.trim(),
+          customerMobile: customerMobileCtrl.text.trim(),
+          customerEmail: customerEmailCtrl.text.trim(),
+          isGst: isGstEnabled ? 1 : 0,
+          orderJson:{
+            "items": widget.cartItems.map((e) => e.toMap()).toList(),
+            "sub_total": subTotal,
+            "gst_percent": gstPercent,
+            "gst_amount": gstAmount,
+            "service_charge": serviceCharge,
+            "discount": discount,
+            "grand_total": grandTotal,
+          }.toString(),
+        );
+
+        //  Build OrderModel (FOR PDF)
+        final orderModel = buildOrderModel(orderId: orderId);
+
+        //  Generate PDF
+        final pdfFile = await InvoicePdf.generate(orderModel);
+
+        //  Send email silently
+        await sendInvoiceEmail(
+          toEmail: orderModel.customerEmail,
+          pdfFile: pdfFile,
+        );
+
+        // Cleanup
+        await RealtimeDbHelper.instance.deleteData('carts/${widget.tableId}');
+        await RealtimeDbHelper.instance.updateData(
+          path: 'restaurant_tables/${widget.tableId}',
+          data: {'status': 'available'},
+        );
+
+        Get.back(); // loader
+        Get.offAll(() => MainLayoutScreen());
+
+        Get.snackbar("Success", "Payment completed & invoice emailed", backgroundColor: Colors.green, colorText: Colors.white,);
+
+      } catch (e) {
+        Get.back();
+        Get.snackbar("Error", "Payment or invoice failed", backgroundColor: Colors.red, colorText: Colors.white,);
+      }
+    }
+
+
+  }
+
+  OrderModel buildOrderModel({String? orderId}) {
+    return OrderModel(
+      orderId: orderId ?? '',
+      customerName: customerNameCtrl.text.trim(),
+      customerEmail: customerEmailCtrl.text.trim(),
+      customerMobile: customerMobileCtrl.text.trim(),
+      isGst: isGstEnabled ? 1 : 0,
+      orderDate: DateTime.now(),
+      orderTotal: grandTotal,
+      orderJson: OrderJson(
+        items: widget.cartItems,
+        subTotal: subTotal,
+        gstPercent: gstPercent,
+        gstAmount: gstAmount,
+        serviceCharge: serviceCharge,
+        discount: discount,
+        grandTotal: grandTotal,
+      ),
+    );
+  }
+
+
+
+
+/*  Future<void> confirmPayment() async {
     Get.dialog(
       const Center(child: CircularProgressIndicator()),
       barrierDismissible: false,
@@ -522,5 +634,5 @@ class _PaymentScreenState extends State<PaymentScreen> {
         colorText: Colors.white,
       );
     }
-  }
+  }*/
 }

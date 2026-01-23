@@ -45,8 +45,10 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Future<void> loadCart() async {
     cartItems = await RealtimeDbHelper.instance.getTableCartList(widget.tableId ?? '');
+    debugPrint("TABLE ${widget.tableId} CART COUNT: ${cartItems.length}",);
     setState(() {});
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -700,7 +702,7 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget buildCartActions() {
     final total = cartItems.fold<double>(
       0,
-          (sum, item) => sum + (double.tryParse(item.productPrice) ?? 0) * item.qty,
+          (sum, item) => sum + (item.productPrice ?? 0) * item.productQty,
     );
 
     return Padding(
@@ -759,7 +761,7 @@ class _MenuScreenState extends State<MenuScreen> {
       itemCount: cartItems.length,
       itemBuilder: (_, index) {
         final item = cartItems[index];
-        final itemTotal = (double.tryParse(item.productPrice) ?? 0) * item.qty;
+        final itemTotal = item.productPrice * item.productQty;
 
         return Card(
           margin: EdgeInsets.all(4.sp),
@@ -800,7 +802,7 @@ class _MenuScreenState extends State<MenuScreen> {
                           color: Colors.red,
                         ),
                         Text(
-                          item.qty.toString(),
+                          item.productQty.toString(),
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: AppColors.white),
                         ),
                         IconButton(
@@ -811,7 +813,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       ],
                     ),
                     Text(
-                      "₹${itemTotal.toStringAsFixed(2)}",
+                      "₹${(itemTotal).toStringAsFixed(2)}",
                       style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.white),
                     ),
                   ],
@@ -843,14 +845,14 @@ class _MenuScreenState extends State<MenuScreen> {
           CartItemModel(
             productId: p.id,
             productName: p.name,
-            productPrice: p.price,
-            qty: 1,
+            productPrice: double.tryParse(p.price ?? '') ?? 0.0,
+            productQty: 1,
             isHalf: 0,
-            note: '',
+            productNote: '',
           ),
         );
       } else {
-        cartItems[index] = cartItems[index].copyWith(qty: cartItems[index].qty + 1);
+        cartItems[index] = cartItems[index].copyWith(qty: cartItems[index].productQty + 1);
       }
     });
 
@@ -866,7 +868,7 @@ class _MenuScreenState extends State<MenuScreen> {
     final index = cartItems.indexWhere((e) => e.productId == item.productId);
 
     setState(() {
-      final newQty = cartItems[index].qty + change;
+      final newQty = cartItems[index].productQty + change;
       if (newQty <= 0) {
         cartItems.removeAt(index);
       } else {
