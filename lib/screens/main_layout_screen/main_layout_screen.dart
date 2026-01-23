@@ -40,6 +40,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true;
       backgroundColor: Color(0xFF2d4875),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
