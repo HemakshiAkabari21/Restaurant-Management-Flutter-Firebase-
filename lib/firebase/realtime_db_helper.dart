@@ -20,15 +20,8 @@ class RealtimeDbHelper {
     return _database.ref(path);
   }
 
-  /// -----------------------------
-  /// CREATE / UPDATE DATA
-  /// -----------------------------
-
   /// Set data (overwrites existing data)
-  Future<void> setData({
-    required String path,
-    required Map<String, dynamic> data,
-  }) async {
+  Future<void> setData({required String path, required Map<String, dynamic> data,}) async {
     try {
       await ref(path).set(data);
     } catch (e) {
@@ -37,10 +30,7 @@ class RealtimeDbHelper {
   }
 
   /// Update data (updates only given fields)
-  Future<void> updateData({
-    required String path,
-    required Map<String, dynamic> data,
-  }) async {
+  Future<void> updateData({required String path, required Map<String, dynamic> data}) async {
     try {
       await ref(path).update(data);
     } catch (e) {
@@ -49,10 +39,7 @@ class RealtimeDbHelper {
   }
 
   /// Push data (auto-generated ID)
-  Future<String?> pushData({
-    required String path,
-    required Map<String, dynamic> data,
-  }) async {
+  Future<String?> pushData({required String path, required Map<String, dynamic> data}) async {
     try {
       final newRef = ref(path).push();
       await newRef.set(data);
@@ -62,10 +49,7 @@ class RealtimeDbHelper {
     }
   }
 
-  /// -----------------------------
   /// READ DATA (ONCE)
-  /// -----------------------------
-
   Future<DataSnapshot> getDataOnce(String path) async {
     try {
       final snapshot = await ref(path).get();
@@ -76,18 +60,12 @@ class RealtimeDbHelper {
     }
   }
 
-  /// -----------------------------
   /// READ DATA (STREAM)
-  /// -----------------------------
-
   Stream<DatabaseEvent> listenToData(String path) {
     return ref(path).onValue;
   }
 
-  /// -----------------------------
   /// DELETE DATA
-  /// -----------------------------
-
   Future<void> deleteData(String path) async {
     try {
       await ref(path).remove();
@@ -96,42 +74,28 @@ class RealtimeDbHelper {
     }
   }
 
-  /// -----------------------------
   /// CHECK IF NODE EXISTS
-  /// -----------------------------
-
   Future<bool> isNodeExists(String path) async {
     final snapshot = await ref(path).get();
     return snapshot.exists;
   }
 
-  /// -----------------------------
   /// Find user by email
-  /// -----------------------------
-
   Future<UserDetail?> getUserByEmail(String email) async {
     try {
       final emailLower = email.trim().toLowerCase();
 
       // Perform the query
-      final snapshot = await ref('users')
-          .orderByChild('email')
-          .equalTo(emailLower)
-          .get();
-
+      final snapshot = await ref('users').orderByChild('email').equalTo(emailLower).get();
       if (!snapshot.exists || snapshot.value == null) return null;
-
       // Snapshot.value for a query is ALWAYS a Map of { "id": { data } }
       // We use Map.from to avoid type-cast errors with dynamic maps
       final rawData = snapshot.value;
       if (rawData is Map) {
         final dataMap = Map<dynamic, dynamic>.from(rawData);
-
         if (dataMap.isNotEmpty) {
           final entry = dataMap.entries.first;
-          return UserDetail.fromMap(
-            entry.key.toString(),
-            Map<String, dynamic>.from(entry.value as Map),
+          return UserDetail.fromMap(entry.key.toString(), Map<String, dynamic>.from(entry.value as Map),
           );
         }
       }
@@ -146,18 +110,14 @@ class RealtimeDbHelper {
     }
   }
 
-
   Future<List<MasterCategoryModel>> getMasterCategories() async {
     final snap = await ref('master_categories').get();
     if (!snap.exists) return [];
 
     final map = snap.value as Map<dynamic, dynamic>;
-    return map.entries
-        .map((e) => MasterCategoryModel.fromMap(e.key, e.value))
-        .toList();
+    return map.entries.map((e) => MasterCategoryModel.fromMap(e.key, e.value)).toList();
   }
 
-  // FIX: Changed from 'master_id' to 'masterId' to match your Firebase structure
   Future<List<CategoryModel>> getCategoriesByMaster(String masterId) async {
     try {
       final snap = await ref('categories').get();
@@ -165,16 +125,14 @@ class RealtimeDbHelper {
 
       final map = snap.value as Map<dynamic, dynamic>;
 
-      final result = map.entries
-          .where((e) {
+      final result = map.entries.where((e) {
+
         final data = e.value as Map<dynamic, dynamic>;
         // Check for both possible field names for compatibility
         final categoryMasterId = data['masterId'] ?? data['master_id'];
         debugPrint('Checking category ${data['name']}: masterId=$categoryMasterId, looking for=$masterId');
         return categoryMasterId == masterId;
-      })
-          .map((e) => CategoryModel.fromMap(e.key, e.value))
-          .toList();
+      }).map((e) => CategoryModel.fromMap(e.key, e.value)).toList();
 
       debugPrint('Found ${result.length} categories for master $masterId');
       return result;
@@ -193,18 +151,14 @@ class RealtimeDbHelper {
     if (!snap.exists) return [];
 
     final map = snap.value as Map<dynamic, dynamic>;
-    return map.entries
-        .map((e) => CategoryModel.fromMap(e.key, e.value))
-        .toList();
+    return map.entries.map((e) => CategoryModel.fromMap(e.key, e.value)).toList();
   }
 
   Future<void> insertBunchCategory(List<Map<String, dynamic>> categories) async {
     for (final cat in categories) {
-      await pushData(
-        path: 'categories',
+      await pushData(path: 'categories',
         data: {
-          'category_name': cat['cat_name'],
-          'category_status': 1,
+          'category_name': cat['cat_name'],'category_status': 1,
         },
       );
     }
@@ -214,7 +168,6 @@ class RealtimeDbHelper {
     return pushData(path: 'products', data: model.toMap());
   }
 
-  // FIX: Changed from 'category_id' to 'categoryId' to match your Firebase structure
   Future<List<ProductModel>> getProductsByCategory(String categoryId) async {
     try {
       final snap = await ref('products').get();
@@ -241,23 +194,10 @@ class RealtimeDbHelper {
     }
   }
 
-
-  Future<void> insertOrUpdateCartItem({
-    required String tableId,
-    required CartItemModel item,
-  }) async {
+  Future<void> insertOrUpdateCartItem({required String tableId, required CartItemModel item}) async {
     final path = 'carts/$tableId/${item.productId}';
     await ref(path).set(item.toMap());
   }
-
-/*  Future<List<CartItemModel>> getTableCartList(String tableId) async {
-    final snap = await ref('carts/$tableId').get();
-    if (!snap.exists) return [];
-
-    final map = snap.value as Map<dynamic, dynamic>;
-    return map.values.map((e) => CartItemModel.fromMap(e)).toList();
-  }*/
-
 
   Future<List<CartItemModel>> getTableCartList(String tableId) async {
     final snap = await ref('carts/$tableId').get();
@@ -281,7 +221,6 @@ class RealtimeDbHelper {
     return (data['product_qty'] as int?) ?? 0;
   }
 
-
   Future<void> deleteCartItem(String tableId, String productId) {
     return ref('carts/$tableId/$productId').remove();
   }
@@ -291,13 +230,7 @@ class RealtimeDbHelper {
     return snap.exists;
   }
 
-  Future<String?> createOrder({
-    required String orderTotal,
-    required String customerName,
-    required String customerMobile,
-    required int isGst,
-    required String orderJson, required customerEmail,
-  }) {
+  Future<String?> createOrder({required String orderTotal, required String customerName, required String customerMobile, required int isGst, required String orderJson, required customerEmail,}) {
     return pushData(
       path: 'orders',
       data: {
@@ -311,53 +244,3 @@ class RealtimeDbHelper {
     );
   }
 }
-
-/*final userId = await RealtimeDbHelper.instance.pushData(
-  path: 'users',
-  data: {
-    'name': 'Hemaxi',
-    'email': 'hemaxi@gmail.com',
-    'createdAt': DateTime.now().millisecondsSinceEpoch,
-  },
-);
-
-print("User ID: $userId");
-
-*/
-
-/*final tableId = await RealtimeDbHelper.instance.pushData(
-  path: 'restaurant_table',
-  data: {
-    'tableNo': 1,
-    'capacity': 4,
-    'status': 'available',
-  },
-);
-
-print("Table ID: $tableId");
-*/
-/*final category = CategoryModel(
-  id: '',
-  masterId: masterId,
-  name: 'Juice',
-  status: 1,
-);
-
-await RealtimeDbHelper.instance.pushData(
-  path: 'categories',
-  data: category.toMap(),
-);
-*/
-/*final product = ProductModel(
-  id: '',
-  categoryId: categoryId,
-  name: 'Apple Juice',
-  price: '80',
-  status: 1,
-);
-
-await RealtimeDbHelper.instance.pushData(
-  path: 'products',
-  data: product.toMap(),
-);
-*/

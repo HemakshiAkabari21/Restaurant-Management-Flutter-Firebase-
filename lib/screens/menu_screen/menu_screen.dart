@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
-import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
 import 'package:restaurant_management_fierbase/model/category_model.dart';
 import 'package:restaurant_management_fierbase/model/master_category_model.dart';
@@ -21,13 +20,16 @@ class MenuScreen extends StatefulWidget {
   State<MenuScreen> createState() => _MenuScreenState();
 }
 
-class _MenuScreenState extends State<MenuScreen> {
+class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMixin {
   MenuLevel currentLevel = MenuLevel.master;
   MasterCategoryModel? selectedMaster;
   CategoryModel? selectedCategory;
   List<CartItemModel> cartItems = [];
+  List<ProductModel> searchProducts = [];
   String? expandedMasterId;
   List<MasterCategoryModel> leftMasters = [];
+  AnimationController? animationController;
+  Animation<double>? searchAnimation;
 
   late Future<List<MasterCategoryModel>> masterFuture;
 
@@ -36,6 +38,17 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   void initState() {
     super.initState();
+    // Initialize animation controller
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    searchAnimation = CurvedAnimation(
+      parent: animationController!,
+      curve: Curves.easeInOut,
+    );
+
     masterFuture = controller.getMasters();
     loadLeftMasters();
     loadCart();
@@ -44,6 +57,18 @@ class _MenuScreenState extends State<MenuScreen> {
   Future<void> loadLeftMasters() async {
     leftMasters = await controller.getMasters();
     setState(() {});
+  }
+
+  void toggleSearch() {
+    if (controller.isSearch.value) {
+      animationController?.reverse();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        controller.clearSearch();
+      });
+    } else {
+      controller.isSearch.value = true;
+      animationController?.forward();
+    }
   }
 
   Future<void> loadCart() async {
@@ -176,42 +201,126 @@ class _MenuScreenState extends State<MenuScreen> {
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding:  EdgeInsets.symmetric(horizontal: 10.w,vertical: 6.h),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFF2d4875), Color(0xFF1a2847)],
                 ),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    currentLevel == MenuLevel.master
-                        ? Icons.restaurant_menu
-                        : currentLevel == MenuLevel.category
-                            ? Icons.category
-                            : Icons.fastfood,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    currentLevel == MenuLevel.master
-                        ? "Select Master Category"
-                        : currentLevel == MenuLevel.category
-                            ? "Select Category"
-                            : "Select Products",
-                    style: const TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  // Title section
+                  Obx(() {
+                    return Row(
+                      children: [
+                        Icon(
+                          currentLevel == MenuLevel.master
+                              ? Icons.restaurant_menu
+                              : currentLevel == MenuLevel.category
+                              ? Icons.category
+                              : Icons.fastfood,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          currentLevel == MenuLevel.master
+                              ? "Select Master Category"
+                              : currentLevel == MenuLevel.category
+                              ? "Select Category"
+                              : "Select Products",
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                  const Spacer(),
+                  // Animated Search Bar
+                  Obx(() {
+                    if (!controller.isSearch.value) {
+                      return const SizedBox.shrink();
+                    }
+                    return SizeTransition(
+                      sizeFactor: searchAnimation ?? AlwaysStoppedAnimation(1),
+                      axis: Axis.horizontal,
+                      axisAlignment: -1,
+                      child: Container(
+                        width: 300,
+                        height: 40,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.gray),
+                        ),
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Icon(
+                                Icons.search,
+                                size: 20,
+                                color: AppColors.black,
+                              ),
+                            ),
+                            Expanded(
+                              child: TextFormField(
+                                controller: controller.searchController,
+                                autofocus: true,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: "Search Product",
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                onChanged: (query) async {
+                                  await controller.searchProducts(query);
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                size: 20,
+                                color: AppColors.black,
+                              ),
+                              onPressed: toggleSearch,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  // Search Icon Button
+                  Obx(() {
+                    if (controller.isSearch.value) {
+                      return const SizedBox.shrink();
+                    }
+                    return IconButton(
+                      onPressed: toggleSearch,
+                      icon: Icon(
+                        Icons.search,
+                        size: 24,
+                        color: AppColors.white,
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: buildGridContent(),
+                child: Obx(() {
+                  if (controller.isSearch.value) {
+                    return buildSearchProductGrid();
+                  }
+                  return buildGridContent();
+                }),
               ),
             ),
           ],
@@ -221,10 +330,14 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Widget buildGridContent() {
-    if (selectedCategory != null) {
-      return buildProductGrid();
+    if(controller.isSearch.value){
+      return buildSearchProductGrid();
+    }else{
+      if (selectedCategory != null) {
+        return buildProductGrid();
+      }
+      return buildMasterGrid();
     }
-    return buildMasterGrid();
   }
 
   Widget buildMasterGrid() {
@@ -296,15 +409,36 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  Widget buildSearchProductGrid(){
+    if(controller.searchResults.isEmpty){
+      return const Center(child: Text("No product found"),);
+    }
+    return  GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: controller.searchResults.length,
+      itemBuilder: (_, index) {
+        return buildProductCard(controller.searchResults[index]);
+      },
+    );
+  }
+
   /// Product card with price
   Widget buildProductCard(ProductModel product) {
+    int productQty = cartItems.firstWhere((e) => e.productId == product.id, orElse: () => CartItemModel(productQty: 0, productId: '', productName: '', productPrice: 0.0, isHalf: 0, productNote: ''),).productQty;
+    CartItemModel item = CartItemModel(productId: product.id, productName: product.name, productPrice:double.tryParse(product.price ?? '') ??0, productQty: productQty, isHalf: 0, productNote: '');
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => addToCart(product),
+        onTap: () {
+          if(productQty == 0){
+            addToCart(product);
+          }
+        },
         borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
@@ -346,12 +480,30 @@ class _MenuScreenState extends State<MenuScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("₹${product.price}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green,),),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h,),
-                          decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(6),),
-                          child: const Icon(Icons.add, color: Colors.white, size: 18,),
-                        ),
+                        if(productQty==0)...[
+                          Text("₹${product.price}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green,),),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
+                            decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(6),),
+                            child: const Icon(Icons.add, color: Colors.white, size: 18),
+                          ),
+                         ]else...[
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline),
+                                onPressed: () => updateQty(item, -1),
+                                color: Colors.red,
+                              ),
+                              Text(item.productQty.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white),),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline),
+                                onPressed: () => updateQty(item, 1),
+                                color: Colors.green,
+                              ),
+                            ],
+                          )
+                        ]
                       ],
                     ),
                   ],
@@ -494,7 +646,7 @@ class _MenuScreenState extends State<MenuScreen> {
         final itemTotal = item.productPrice * item.productQty;
 
         return Card(
-          margin: EdgeInsets.all(4.sp),
+          margin: EdgeInsets.symmetric(horizontal:4.w,vertical: 4.h),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12.r),
@@ -520,7 +672,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: semiBold),
                     ),
                   ],
-                ).paddingOnly(bottom: 8.h),
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -531,10 +683,7 @@ class _MenuScreenState extends State<MenuScreen> {
                           onPressed: () => updateQty(item, -1),
                           color: Colors.red,
                         ),
-                        Text(
-                          item.productQty.toString(),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white),
-                        ),
+                        Text(item.productQty.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white),),
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline),
                           onPressed: () => updateQty(item, 1),
