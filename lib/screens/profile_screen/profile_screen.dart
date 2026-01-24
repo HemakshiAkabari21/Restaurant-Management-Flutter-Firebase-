@@ -17,37 +17,40 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+   /*   appBar: CustomAppBar(
         backgroundColor: AppColors.black,
         isLeading: false,
         statusColor: AppColors.black,
         title: Text("Profile".toUpperCase(),style: StyleHelper.customStyle(color: AppColors.white,size: 16.sp,family: semiBold),),
-      ),
+      ),*/
       body: SingleChildScrollView(
         child: Column(
           children: [
+            buildHeader(),
 
-            CustomButton(
-              onTap: (){
-                getStorage.remove(IS_LOGIN);
-                getStorage.remove(USER_ID);
-                getStorage.remove(USER_DETAIL);
-                getStorage.erase();
-                Get.offAll(()=>LogInScreen());
-              },
-              topMargin: 50.h,
-              borderColor: AppColors.black,
-              height: 40.h,
-              borderRadius: 12.r,
-              text: 'LOGOUT',
-              textStyle: StyleHelper.customStyle(color: AppColors.black,size: 6.sp,family: semiBold),
-            )
           ],
-        ).paddingSymmetric(horizontal: 16.w),
+        ),
       ),
+      bottomNavigationBar: CustomButton(
+        onTap: (){
+          getStorage.remove(IS_LOGIN);
+          getStorage.remove(USER_ID);
+          getStorage.remove(USER_DETAIL);
+          getStorage.erase();
+          Get.offAll(()=>LogInScreen());
+        },
+        topMargin: 50.h,
+        borderColor:Color(0xFF1a2847),
+        height: 50.h,
+        color:  Color(0xFF1a2847),
+        borderRadius: 12.r,
+        text: 'LOGOUT',
+        textStyle: StyleHelper.customStyle(color: AppColors.white,size: 6.sp,family: semiBold),
+      ).paddingSymmetric(horizontal: 16.w),
     );
   }
 
@@ -58,6 +61,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 
       ],
+    );
+  }
+
+  Widget buildHeader() {
+    return Container(
+      padding: EdgeInsets.only(left: 10.w, top: 20.h,bottom: 5.h),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF2d4875), Color(0xFF1a2847)]
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Profile', style: StyleHelper.customStyle(color: AppColors.white, size: 10.sp, family: semiBold,),).paddingOnly(bottom: 4.h),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

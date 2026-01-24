@@ -14,7 +14,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
-import 'package:mailer/smtp_server/gmail.dart';
 import 'package:open_file/open_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -1034,6 +1033,197 @@ class InvoicePdf {
                     ],
                   ),
                   ...order.orderJson.items.map((item) {
+                    // Calculate effective quantity (reduce by 0.5 if half)
+                    final effectiveQty = item.isHalf == 1
+                        ? (item.productQty - 0.5)
+                        : item.productQty.toDouble();
+
+                    // Calculate amount with effective quantity
+                    final amount = effectiveQty * item.productPrice;
+
+                    // Display quantity with .5 if half
+                    final displayQty = item.isHalf == 1
+                        ? "${item.productQty - 0.5}"
+                        : item.productQty.toString();
+
+                    // Create item name with half indicator
+                    final itemName = item.isHalf == 1
+                        ? "${item.productName} (Half)"
+                        : item.productName;
+
+                    return pw.TableRow(
+                      children: [
+                        tableCell(itemName, regularFont),
+                        tableCell(displayQty, regularFont),
+                        tableCell(
+                            formatCurrency(item.productPrice), regularFont),
+                        tableCell(formatCurrency(amount), regularFont),
+                      ],
+                    );
+                  }).toList(),
+                ],
+              ),
+
+              //invoiceDivider(),
+              pw.SizedBox(height: 8),
+              /// ================= TOTALS =================
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Container(
+                    width: 220,
+                    child: pw.Column(
+                      children: [
+                        totalRow(
+                            'Subtotal',
+                            formatCurrency(order.orderJson.subTotal),
+                            boldFont),
+                        totalRow(
+                            'GST (${order.orderJson.gstPercent}%)',
+                            formatCurrency(order.orderJson.gstAmount),
+                            boldFont),
+                        totalRow(
+                            'Service Charge',
+                            formatCurrency(order.orderJson.serviceCharge),
+                            boldFont),
+                        totalRow(
+                            'Discount',
+                            '- ${formatCurrency(order.orderJson.discount)}',
+                            boldFont),
+                        invoiceDivider(thickness: 1.4),
+                        totalRow(
+                          'GRAND TOTAL',
+                          formatCurrency(order.orderJson.grandTotal),
+                          boldFont,
+                          isGrand: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 2),
+              invoiceDivider(thickness: 1.2),
+              pw.SizedBox(height: 2),
+              /// ================= FOOTER =================
+              pw.Text(
+                'Thank you for dining with us!',
+                style: pw.TextStyle(font: boldFont, fontSize: 12),
+                textAlign: pw.TextAlign.center,
+              ),
+              pw.SizedBox(height: 4),
+              pw.Row(
+                  children: [
+                    pw.Text('Visit again ', textAlign: pw.TextAlign.center),
+                    pw.Text('🙂', textAlign: pw.TextAlign.center,style: pw.TextStyle(font: emojiFont)),
+                  ]
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    final dir = await getApplicationDocumentsDirectory();
+    final file =
+    File('${dir.path}/invoice_${order.orderId}.pdf');
+
+    await file.writeAsBytes(await pdf.save());
+    return file;
+  }
+}
+
+/*class InvoicePdf {
+  static Future<File> generate(OrderModel order) async {
+    final pdf = pw.Document();
+    pw.Font? regularFont;
+    pw.Font? boldFont;
+    late pw.MemoryImage logo;
+    final emojiFont = pw.Font.ttf(await rootBundle.load('assets/fonts/NotoEmoji-Regular.ttf'),);
+
+    try {
+      final logoBytes = (await rootBundle
+          .load('assets/images/splash_image.png'))
+          .buffer
+          .asUint8List();
+      logo = pw.MemoryImage(logoBytes);
+
+      regularFont = await PdfGoogleFonts.robotoRegular();
+      boldFont = await PdfGoogleFonts.robotoBold();
+    } catch (_) {}
+
+    pdf.addPage(
+      pw.Page(
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Row(
+                    children: [
+                      pw.Image(logo, height: 60),
+                      pw.SizedBox(width: 12),
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('Prognostic', style: pw.TextStyle(font: boldFont, fontSize: 18,),),
+                          pw.Text('INVOICE', style: pw.TextStyle(fontSize: 12,),),
+                        ],
+                      ),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text('Invoice: # ${order.orderId}', style: pw.TextStyle(font: boldFont, fontSize: 11),),
+                      pw.Text(formatInvoiceDateTime(order.orderDate), style: const pw.TextStyle(fontSize: 10),),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 4),
+              invoiceDivider(thickness: 1),
+              pw.SizedBox(height: 4),
+              /// ================= CUSTOMER DETAILS =================
+              pw.Text('Customer Details', style: pw.TextStyle(font: boldFont, fontSize: 14)),
+              pw.SizedBox(height: 6),
+              pw.Text('Name   : ${order.customerName}'),
+              pw.SizedBox(height: 2),
+              pw.Text('Mobile : ${order.customerMobile}'),
+              pw.SizedBox(height: 2),
+              pw.Text('Email  : ${order.customerEmail}'),
+              pw.SizedBox(height: 4),
+              invoiceDivider(),
+              pw.SizedBox(height: 4),
+              /// ================= ITEMS TABLE =================
+              pw.Text('Order Items',
+                  style: pw.TextStyle(font: boldFont, fontSize: 14)),
+              pw.SizedBox(height: 8),
+
+              pw.Table(
+                border: pw.TableBorder.all(width: 0.6),
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(4),
+                  1: const pw.FlexColumnWidth(2),
+                  2: const pw.FlexColumnWidth(2),
+                  3: const pw.FlexColumnWidth(2),
+                },
+                children: [
+                  pw.TableRow(
+                    decoration: const pw.BoxDecoration(
+                      color: PdfColors.grey300,
+                    ),
+                    children: [
+                      tableCell('Item', boldFont),
+                      tableCell('Qty', boldFont),
+                      tableCell('Price', boldFont),
+                      tableCell('Amount', boldFont),
+                    ],
+                  ),
+                  ...order.orderJson.items.map((item) {
                     final amount =
                         item.productQty * (item.productPrice);
                     return pw.TableRow(
@@ -1116,7 +1306,7 @@ class InvoicePdf {
     await file.writeAsBytes(await pdf.save());
     return file;
   }
-}
+}*/
 
 // Helper methods (copy from your BookingInformationPdf widget)
 Future<void> openPdf(Uint8List bytes) async {

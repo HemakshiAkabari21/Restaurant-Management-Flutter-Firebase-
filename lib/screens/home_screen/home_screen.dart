@@ -141,6 +141,9 @@ class _HomeScreenState extends State<HomeScreen> {
          Get.to(()=>MenuScreen(tableId: table.id));
         }
       },
+      onLongPress: (){
+        showTableDeleteDialog(context,table);
+      },
       child: SizedBox(
         width: double.infinity,
         child: Stack(
@@ -206,16 +209,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 60.w,
                 height: 60.h,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFffb3b3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+                decoration: BoxDecoration(shape: BoxShape.circle, color: Color(0xFFffb3b3),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: Offset(0, 2),),],
                 ),
                 child: Text(
                   '${table.tableNo}',
@@ -234,25 +229,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void editTableDialog(BuildContext context, RestaurantTableModel table) {
-    final capacityController =
-    TextEditingController(text: table.capacityPeople.toString());
+    final capacityController = TextEditingController(text: table.capacityPeople.toString());
+
     String status = table.status;
+
     showDialog(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           backgroundColor: AppColors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          title: Text(
-            'Edit Table ${table.tableNo}',
-            style: StyleHelper.customStyle(
-              color: AppColors.black,
-              size: 8.sp,
-              family: semiBold,
-            ),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          title: Text('Edit Table ${table.tableNo}', style: StyleHelper.customStyle(color: AppColors.black, size: 8.sp, family: semiBold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -261,67 +248,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: 'Capacity',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
                 ),
-              ),
-              SizedBox(height: 16.h),
+              ).paddingOnly(bottom: 16.h),
               DropdownButtonFormField<String>(
                 value: status,
                 decoration: InputDecoration(
                   labelText: 'Status',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
                 ),
-                items: ['available', 'booked']
-                    .map((e) => DropdownMenuItem(
+                items: ['available', 'booked'].map((e) => DropdownMenuItem(
                   value: e,
                   child: Text(e.capitalizeFirst!),
-                ))
-                    .toList(),
+                )).toList(),
                 onChanged: (v) {
-                  setState(() {
-                    status = v!;
-                  });
+                  setState(() {status = v!;});
                 },
               ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: StyleHelper.customStyle(
-                  color: Colors.grey,
-                  size: 6.sp,
-                ),
-              ),
+              onPressed: () => Get.back(),
+              child: Text('Cancel', style: StyleHelper.customStyle(color: Colors.grey, size: 6.sp,),),
             ),
             ElevatedButton(
               onPressed: () async {
-                final updated = table.copyWith(
-                  capacityPeople: int.tryParse(capacityController.text) ??
-                      table.capacityPeople,
-                  status: status,
-                );
+                final updated = table.copyWith(capacityPeople: int.tryParse(capacityController.text) ?? table.capacityPeople, status: status);
                 await homeController.updateTable(updated);
                 Get.back();
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2d4875),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-              ),
-              child: Text(
-                'Save',
-                style: StyleHelper.customStyle(
-                  color: AppColors.white,
-                  size: 6.sp,
-                ),
+              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF2d4875), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r))),
+              child: Text('Save', style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp,),
               ),
             ),
           ],
@@ -345,40 +303,16 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: InputDecoration(labelText: 'Number of tables', hintText: 'Enter number of tables'),
           ),
           actions: [
-    /*        TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: StyleHelper.customStyle(color: AppColors.black, size: 14.sp, family: medium)),
-            ),
             TextButton(
-              onPressed: () {
-                final count = int.tryParse(tableCountController.text);
-                if (count != null && count > 0) {
-                  homeController.createRestaurantTables(count);
-                  Navigator.pop(context);
-                }
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-                decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(12.r)),
-                child: Text('Create', style: StyleHelper.customStyle(color: AppColors.white, size: 14.sp, family: medium)),
-              ),
-            ),*/
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: StyleHelper.customStyle(
-                  color: Colors.grey,
-                  size: 6.sp,
-                ),
-              ),
+              onPressed: () => Get.back(),
+              child: Text('Cancel', style: StyleHelper.customStyle(color: Colors.grey, size: 6.sp),),
             ),
             ElevatedButton(
               onPressed: () {
                 final count = int.tryParse(tableCountController.text);
                 if (count != null && count > 0) {
                   homeController.createRestaurantTables(count);
-                  Navigator.pop(context);
+                  Get.back();
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -386,6 +320,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r),),
               ),
               child: Text('Create', style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp,),),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showTableDeleteDialog(BuildContext context,RestaurantTableModel table) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.white,
+          title: Text('Delete Restaurant Table no:${table.tableNo}',textAlign: TextAlign.center,),
+          content:Text('Are you sure you want to delete the table.',textAlign: TextAlign.center,),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text('Cancel', style: StyleHelper.customStyle(color: Colors.grey, size: 6.sp,),),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                RealtimeDbHelper.instance.deleteTable(table);
+                Get.back();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF2d4875),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r),),
+              ),
+              child: Text('Delete', style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp,),),
             ),
           ],
         );

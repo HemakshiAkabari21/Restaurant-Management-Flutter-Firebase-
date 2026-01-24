@@ -211,33 +211,31 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Title section
-                  Obx(() {
-                    return Row(
-                      children: [
-                        Icon(
-                          currentLevel == MenuLevel.master
-                              ? Icons.restaurant_menu
-                              : currentLevel == MenuLevel.category
-                              ? Icons.category
-                              : Icons.fastfood,
+                  Row(
+                    children: [
+                      Icon(
+                        currentLevel == MenuLevel.master
+                            ? Icons.restaurant_menu
+                            : currentLevel == MenuLevel.category
+                            ? Icons.category
+                            : Icons.fastfood,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        currentLevel == MenuLevel.master
+                            ? "Select Master Category"
+                            : currentLevel == MenuLevel.category
+                            ? "Select Category"
+                            : "Select Products",
+                        style: const TextStyle(
+                          fontSize: 20,
                           color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          currentLevel == MenuLevel.master
-                              ? "Select Master Category"
-                              : currentLevel == MenuLevel.category
-                              ? "Select Category"
-                              : "Select Products",
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
+                      ),
+                    ],
+                  ),
                   const Spacer(),
                   // Animated Search Bar
                   Obx(() {
@@ -597,7 +595,228 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
     );
   }
 
+  // In menu_screen.dart - Replace the buildCartList method
+
+  Widget buildCartList() {
+    if (cartItems.isEmpty) {
+      return const Center(child: Text("No items added"));
+    }
+
+    return ListView.builder(
+      itemCount: cartItems.length,
+      itemBuilder: (_, index) {
+        final item = cartItems[index];
+        // Use the actual item's isHalf value from the cart
+        final isHalf = item.isHalf == 1;
+
+        // Calculate price based on half portion
+        final effectiveQty = isHalf ? (item.productQty - 0.5) : item.productQty.toDouble();
+        final itemTotal = item.productPrice * effectiveQty;
+
+        return Card(
+          margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12.r),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2d4875), Color(0xFF1a2847)],
+              ),
+            ),
+            padding: EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.productName,
+                        style: StyleHelper.customStyle(
+                          family: bold,
+                          color: AppColors.white,
+                          size: 4.sp,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      "₹${item.productPrice}",
+                      style: StyleHelper.customStyle(
+                        color: AppColors.white,
+                        size: 4.sp,
+                        family: semiBold,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: () => updateQty(item, -1),
+                          color: Colors.red,
+                        ),
+                        Text(
+                          // Show quantity with .5 if half is selected
+                          isHalf ? "${item.productQty - 0.5}" : item.productQty.toString(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: () => updateQty(item, 1),
+                          color: Colors.green,
+                        ),
+                      ],
+                    ),
+                    Text(
+                      "₹${itemTotal.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: "Special note",
+                          isDense: true,
+                          hintStyle: StyleHelper.customStyle(
+                            color: AppColors.white,
+                            size: 4.sp,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: AppColors.white),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: AppColors.white),
+                          ),
+                        ),
+                        onChanged: (val) => updateNote(item, val),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Transform.scale(
+                          scale: 0.5,
+                          child: Switch(
+                            value: isHalf,
+                            activeTrackColor: Color(0xFF1a2847),
+                            activeColor: AppColors.white,
+                            inactiveThumbColor: AppColors.black,
+                            inactiveTrackColor: AppColors.white,
+                            onChanged: (v) {
+                              // Update the cart item's isHalf value
+                              updateIsHalf(item, v ? 1 : 0);
+                            },
+                          ),
+                        ),
+                        Text(
+                          "Is Half",
+                          style: StyleHelper.customStyle(
+                            color: AppColors.white,
+                            size: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+// Also update the buildCartActions method to calculate total correctly
   Widget buildCartActions() {
+    // Calculate total considering half portions
+    final total = cartItems.fold<double>(0, (sum, item) {
+      final effectiveQty = item.isHalf == 1
+          ? (item.productQty - 0.5)
+          : item.productQty.toDouble();
+      return sum + (item.productPrice ?? 0) * effectiveQty;
+    });
+
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Total:",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  "₹${total.toStringAsFixed(2)}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: cartItems.isEmpty ? null : placeOrder,
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 45),
+              backgroundColor: Color(0xFF1a2847),
+            ),
+            child: Text(
+              "Place Order",
+              style: StyleHelper.customStyle(
+                color: AppColors.white,
+                size: 4.sp,
+                family: bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF1a2847),
+              minimumSize: const Size(double.infinity, 45),
+            ),
+            onPressed: cartItems.isEmpty ? null : generateBill,
+            child: Text(
+              "Generate Bill",
+              style: StyleHelper.customStyle(
+                color: AppColors.white,
+                size: 4.sp,
+                family: bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+/*  Widget buildCartActions() {
     final total = cartItems.fold<double>(0, (sum, item) => sum + (item.productPrice ?? 0) * item.productQty,);
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -643,6 +862,7 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
       itemCount: cartItems.length,
       itemBuilder: (_, index) {
         final item = cartItems[index];
+        RxBool isHalf = false.obs;
         final itemTotal = item.productPrice * item.productQty;
 
         return Card(
@@ -650,8 +870,8 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12.r),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: /*isAvailable*/
-                      /*?*/ [Color(0xFF2d4875), Color(0xFF1a2847)]
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: *//*isAvailable*//*
+                      *//*?*//* [Color(0xFF2d4875), Color(0xFF1a2847)]
                   // : [Color(0xFFff6b6b), Color(0xFFee5a6f)],
                   ),
             ),
@@ -662,15 +882,10 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        item.productName,
-                        style: StyleHelper.customStyle(family: bold, color: AppColors.white, size: 4.sp),
+                      child: Text(item.productName, style: StyleHelper.customStyle(family: bold, color: AppColors.white, size: 4.sp),
                       ),
                     ),
-                    Text(
-                      "₹${item.productPrice}",
-                      style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: semiBold),
-                    ),
+                    Text("₹${item.productPrice}", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: semiBold),),
                   ],
                 ),
                 Row(
@@ -694,15 +909,41 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
                     Text("₹${(itemTotal).toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.white),),
                   ],
                 ),
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: "Special note",
-                    isDense: true,
-                    hintStyle: StyleHelper.customStyle(color: AppColors.white, size: 4.sp,),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white),),
-                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white),),
-                  ),
-                  onChanged: (val) => updateNote(item, val),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: "Special note",
+                          isDense: true,
+                          hintStyle: StyleHelper.customStyle(color: AppColors.white, size: 4.sp,),
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white),),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white),),
+                        ),
+                        onChanged: (val) => updateNote(item, val),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Transform.scale(
+                          scale: 0.5,
+                          child: Switch(
+                            value: isHalf.value,
+                            activeTrackColor: Color(0xFF1a2847),
+                            activeColor: AppColors.white,
+                            inactiveThumbColor: AppColors.black,
+                            inactiveTrackColor: AppColors.white,
+                            onChanged: (v) {
+                              isHalf.value = v;
+                              updateIsHalf(item, isHalf.value ? 1 : 0);
+                            },
+                          ),
+                        ),
+                        Text("Is Half",style: StyleHelper.customStyle(color: AppColors.white,size: 12),),
+                      ],
+                    ),
+                  ],
                 )
               ],
             ),
@@ -710,7 +951,7 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
         );
       },
     );
-  }
+  }*/
 
   void addToCart(ProductModel p) {
     controller.addToCart(cartItems: cartItems, product: p,);
@@ -724,6 +965,11 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
 
   void updateNote(CartItemModel item, String note) {
     controller.updateNote(cartItems: cartItems, item: item, note: note,);
+    setState(() {});
+  }
+
+  void updateIsHalf(CartItemModel item,int isHalf){
+    controller.updateIsHalf(cartItems: cartItems, item: item, isHalf: isHalf);
     setState(() {});
   }
 

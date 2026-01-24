@@ -159,6 +159,12 @@ class MenuScreenController extends GetxController {
     cartItems[index] = cartItems[index].copyWith(note: note, qty: null);
   }
 
+  void updateIsHalf({required List<CartItemModel> cartItems,required CartItemModel item, required int isHalf}){
+    final index = cartItems.indexWhere((e)=>e.productId == item.productId);
+    if(index == -1) return;
+    cartItems[index] = cartItems[index].copyWith(isHalf: isHalf);
+  }
+
   double calculateTotal(List<CartItemModel> cartItems) {
     return cartItems.fold(0, (sum, item) => sum + (item.productPrice ?? 0) * item.productQty,);
   }

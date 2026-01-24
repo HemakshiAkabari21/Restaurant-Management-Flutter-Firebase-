@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
 import 'package:restaurant_management_fierbase/model/category_model.dart';
 import 'package:restaurant_management_fierbase/model/product_model.dart';
+import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
 
 import '../model/master_category_model.dart';
@@ -13,20 +14,11 @@ class RealtimeDbHelper {
   /// https://restaurant-management-6ae21-default-rtdb.firebaseio.com/ url of my db.
   static final RealtimeDbHelper instance = RealtimeDbHelper._();
 
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
+  final FirebaseDatabase database = FirebaseDatabase.instance;
 
   /// Reference shortcut
   DatabaseReference ref(String path) {
-    return _database.ref(path);
-  }
-
-  /// Set data (overwrites existing data)
-  Future<void> setData({required String path, required Map<String, dynamic> data,}) async {
-    try {
-      await ref(path).set(data);
-    } catch (e) {
-      rethrow;
-    }
+    return database.ref(path);
   }
 
   /// Update data (updates only given fields)
@@ -74,10 +66,19 @@ class RealtimeDbHelper {
     }
   }
 
-  /// CHECK IF NODE EXISTS
-  Future<bool> isNodeExists(String path) async {
-    final snapshot = await ref(path).get();
-    return snapshot.exists;
+  /// DELETE TABLE
+  Future<void> deleteTable(RestaurantTableModel table)async {
+    if (table.id.isEmpty) {
+      throw Exception("Table ID is empty. Cannot delete.");
+    }
+
+    try {
+      return ref('restaurant_tables/${table.id}').remove();
+    }catch (e){
+      debugPrint("DELETE TABLE ::::::$e");
+      rethrow;
+    }
+
   }
 
   /// Find user by email
@@ -142,30 +143,12 @@ class RealtimeDbHelper {
     }
   }
 
-  Future<String?> insertCategory(CategoryModel model) {
-    return pushData(path: 'categories', data: model.toMap());
-  }
-
   Future<List<CategoryModel>> getCategories() async {
     final snap = await ref('categories').get();
     if (!snap.exists) return [];
 
     final map = snap.value as Map<dynamic, dynamic>;
     return map.entries.map((e) => CategoryModel.fromMap(e.key, e.value)).toList();
-  }
-
-  Future<void> insertBunchCategory(List<Map<String, dynamic>> categories) async {
-    for (final cat in categories) {
-      await pushData(path: 'categories',
-        data: {
-          'category_name': cat['cat_name'],'category_status': 1,
-        },
-      );
-    }
-  }
-
-  Future<String?> insertProduct(ProductModel model) {
-    return pushData(path: 'products', data: model.toMap());
   }
 
   Future<List<ProductModel>> getProductsByCategory(String categoryId) async {
@@ -209,16 +192,6 @@ class RealtimeDbHelper {
       final itemMap = Map<String, dynamic>.from(e as Map);
       return CartItemModel.fromMap(itemMap);
     }).toList();
-  }
-
-  Future<int> getCartQty(String tableId, String productId) async {
-    final snap = await ref('carts/$tableId/$productId').get();
-
-    if (!snap.exists || snap.value == null) return 0;
-
-    final data = snap.value as Map<dynamic, dynamic>;
-
-    return (data['product_qty'] as int?) ?? 0;
   }
 
   Future<void> deleteCartItem(String tableId, String productId) {

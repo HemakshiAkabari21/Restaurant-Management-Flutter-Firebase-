@@ -101,17 +101,12 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     );
   }
 
-  Widget buildSidebarItem({
-    required String icon,
-    required String name,
-    required GestureTapCallback onTap,
-    required int index,
-  }) {
+  Widget buildSidebarItem({required String icon, required String name, required GestureTapCallback onTap, required int index}) {
     return Obx(
           () => GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 80.w,
+          width:  80.w,
           height: 80.h,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12.r),
@@ -130,8 +125,8 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
             children: [
               Image.asset(
                 icon,
-                height: 24.h,
-                width: 24.w,
+                height:  index == 1 ? 40.h : 24.h,
+                width:  index == 1 ? 40.w : 24.w,
                 color: index == currentIndex.value
                     ? AppColors.black
                     : AppColors.white,
