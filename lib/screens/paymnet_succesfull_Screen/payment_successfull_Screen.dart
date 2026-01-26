@@ -381,8 +381,7 @@ import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
 import 'package:restaurant_management_fierbase/screens/paymnet_succesfull_Screen/payment_successfull_controller.dart';
-import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
-import 'package:share_plus/share_plus.dart';
+
 
 class PaymentScreen extends StatelessWidget {
   final PaymentSuccessfullyController controller;

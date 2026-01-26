@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
+import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
 
 class HomeController extends GetxController {
 
   RxString selectedTab = "home".obs;
   RxInt currentScreenIndex = 0.obs;
+  Rxn<UserDetail> userDetail = Rxn<UserDetail>();
 
   Future<void> createRestaurantTables(int count) async {
     final lastTableNo = await getLastTableNumber();
@@ -41,7 +43,6 @@ class HomeController extends GetxController {
     return int.tryParse(last['table_no'].toString()) ?? 0;
   }
 
-
   Future<List<RestaurantTableModel>> getTablesOnce() async {
     final snapshot = await RealtimeDbHelper.instance.ref('restaurant_tables').orderByChild('table_no').get();
     debugPrint("Snapshot:::::::::: $snapshot");
@@ -65,6 +66,14 @@ class HomeController extends GetxController {
     );
   }
 
-
+  Future<void> getUserDetail({required String userID}) async {
+    final user = await RealtimeDbHelper.instance.getUserDetailByUserId(userID);
+    if (user == null) {
+      debugPrint("User not found");
+      return;
+    }
+    userDetail.value = user;
+    debugPrint("User Type ::::::::::::: ${userDetail.value?.userType}");
+  }
 
 }

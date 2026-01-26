@@ -44,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Get.offAll(()=>LogInScreen());
         },
         topMargin: 50.h,
+        bottomMargin: 20.h,
         borderColor:Color(0xFF1a2847),
         height: 50.h,
         color:  Color(0xFF1a2847),

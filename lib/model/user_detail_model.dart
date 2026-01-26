@@ -1,11 +1,11 @@
 class UserDetail {
-  final String id;
-  final String name;
-  final String email;
-  final String mobile;
-  final String password;
-  final String userType;
-  final String createdAt;
+  final String? id;
+  final String? name;
+  final String? email;
+  final String? mobile;
+  final String? password;
+  final String? userType;
+  final String? createdAt;
 
   UserDetail({
     required this.id,

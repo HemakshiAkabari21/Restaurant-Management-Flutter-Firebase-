@@ -122,9 +122,9 @@ class MenuSettingScreen extends StatelessWidget {
                 case MenuSettingType.master:
                   return _buildMasterGrid(controller);
                 case MenuSettingType.category:
-                  return _buildCategoryGrid(controller);
+                  return buildCategoryGrid(controller);
                 case MenuSettingType.product:
-                  return _buildProductGrid(controller);
+                  return buildProductGrid(controller);
               }
             }).paddingSymmetric(horizontal: 2.w),
           ),
@@ -150,11 +150,11 @@ class MenuSettingScreen extends StatelessWidget {
         child: Obx(() {
           switch (controller.selectedType.value) {
             case MenuSettingType.master:
-              return _buildMasterForm(controller);
+              return buildMasterForm(controller);
             case MenuSettingType.category:
-              return _buildCategoryForm(controller);
+              return buildCategoryForm(controller);
             case MenuSettingType.product:
-              return _buildProductForm(controller);
+              return buildProductForm(controller);
           }
         }),
       ),
@@ -221,7 +221,7 @@ class MenuSettingScreen extends StatelessWidget {
   }
 
   // CATEGORY GRID
-  Widget _buildCategoryGrid(MenuSettingController controller) {
+  Widget buildCategoryGrid(MenuSettingController controller) {
     return FutureBuilder<List<CategoryModel>>(
       future: RealtimeDbHelper.instance.getCategories(),
       builder: (_, snap) {
@@ -266,8 +266,7 @@ class MenuSettingScreen extends StatelessWidget {
                       Expanded(
                         flex: 1,
                         child: Center(
-                          child: Text(c.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-                              style: StyleHelper.customStyle(size: 6.sp, color: AppColors.white, family: medium)),
+                          child: Text(c.name,textAlign: TextAlign.center,   maxLines: null,   overflow: TextOverflow.ellipsis, style: StyleHelper.customStyle(size: 4.sp, color: AppColors.white, family: medium),),
                         ),
                       ),
                     ],
@@ -282,7 +281,7 @@ class MenuSettingScreen extends StatelessWidget {
   }
 
   // PRODUCT GRID
-  Widget _buildProductGrid(MenuSettingController controller) {
+  Widget buildProductGrid(MenuSettingController controller) {
     return Obx(() {
       return FutureBuilder<List<ProductModel>>(
         future: controller.selectedCategory.value != null
@@ -308,14 +307,14 @@ class MenuSettingScreen extends StatelessWidget {
             childAspectRatio: 0.85,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            children: snap.data!.map((p) => _buildProductCard(p, controller)).toList(),
+            children: snap.data!.map((p) => buildProductCard(p, controller)).toList(),
           );
         },
       );
     });
   }
 
-  Widget _buildProductCard(ProductModel product, MenuSettingController controller) {
+  Widget buildProductCard(ProductModel product, MenuSettingController controller) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -373,7 +372,7 @@ class MenuSettingScreen extends StatelessWidget {
   }
 
   // MASTER FORM
-  Widget _buildMasterForm(MenuSettingController controller) {
+  Widget buildMasterForm(MenuSettingController controller) {
     return Obx(() => Column(
       children: [
         // Header - Fixed
@@ -464,7 +463,7 @@ class MenuSettingScreen extends StatelessWidget {
   }
 
   // CATEGORY FORM
-  Widget _buildCategoryForm(MenuSettingController controller) {
+  Widget buildCategoryForm(MenuSettingController controller) {
     return Obx(() => Column(
       children: [
         // Header - Fixed
@@ -571,7 +570,7 @@ class MenuSettingScreen extends StatelessWidget {
   }
 
   // PRODUCT FORM
-  Widget _buildProductForm(MenuSettingController controller) {
+  Widget buildProductForm(MenuSettingController controller) {
     return Obx(() => Column(
       children: [
         // Header - Fixed

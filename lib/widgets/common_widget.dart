@@ -10,7 +10,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
-import 'package:googleapis_auth/auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mailer/mailer.dart';
@@ -23,16 +22,12 @@ import 'package:printing/printing.dart';
 import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
 import 'package:restaurant_management_fierbase/model/order_model.dart';
-import 'package:restaurant_management_fierbase/repository/cloudinary_service.dart';
+import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
 import 'package:restaurant_management_fierbase/utils/const_images_key.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:googleapis/drive/v3.dart' as drive;
-import 'package:googleapis_auth/googleapis_auth.dart';
-import 'package:http/http.dart' as http;
+
 
 
 ColorFilter setSvgColor(Color color) {

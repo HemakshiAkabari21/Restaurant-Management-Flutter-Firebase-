@@ -5,9 +5,13 @@ import 'package:get/get.dart';
 import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
+import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
+import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
 import 'package:restaurant_management_fierbase/screens/home_screen/home_controller.dart';
 import 'package:restaurant_management_fierbase/screens/menu_screen/menu_screen.dart';
+import 'package:restaurant_management_fierbase/screens/paymnet_succesfull_Screen/payment_successfull_Screen.dart';
+import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int index) onTabChange;
@@ -19,6 +23,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   HomeController homeController = Get.find<HomeController>();
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    debugPrint("UserId::::::${getStorage.read(USER_ID)}");
+    homeController.getUserDetail(userID: getStorage.read(USER_ID));
+    super.initState();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -134,11 +148,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isAvailable = table.status == 'available';
 
     return GestureDetector(
-      onTap: () {
+      onTap: ()async {
         if (isAvailable) {
           editTableDialog(context, table);
         } else {
-         Get.to(()=>MenuScreen(tableId: table.id));
+          if(homeController.userDetail.value?.userType == 'Cashier'){
+            final cartItems = await RealtimeDbHelper.instance.getTableCartList(table.id);
+            Get.to(()=>PaymentScreen(tableId: table.id, cartItems: cartItems,));
+          }else{
+            Get.to(()=>MenuScreen(tableId: table.id));
+          }
         }
       },
       onLongPress: (){
@@ -181,23 +200,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    isAvailable ? 'Free Table' : 'Occupied',
-                    textAlign: TextAlign.center,
-                    style: StyleHelper.customStyle(
-                      color: AppColors.white,
-                      size: 6.sp,
-                      family: semiBold,
-                    ),
-                  ).paddingOnly(bottom: 4.h, top: 20.h),
-                  Text(
-                    isAvailable ? 'Waiting for God!' : 'In Use',
-                    textAlign: TextAlign.center,
-                    style: StyleHelper.customStyle(
-                      color: AppColors.white.withOpacity(0.9),
-                      size: 5.sp,
-                    ),
-                  ),
+                  Text(isAvailable ? 'Free Table' : 'Occupied', textAlign: TextAlign.center,
+                    style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp, family: semiBold,),).paddingOnly(bottom: 4.h, top: 20.h),
+                  Text(isAvailable ? 'Waiting for God!' : 'In Use', textAlign: TextAlign.center,
+                    style: StyleHelper.customStyle(color: AppColors.white.withOpacity(0.9), size: 5.sp,),),
                 ],
               ),
             ),
@@ -212,13 +218,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(shape: BoxShape.circle, color: Color(0xFFffb3b3),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: Offset(0, 2),),],
                 ),
-                child: Text(
-                  '${table.tableNo}',
-                  style: StyleHelper.customStyle(
-                    color: AppColors.black,
-                    size: 10.sp,
-                    family: semiBold,
-                  ),
+                child: Text('${table.tableNo}',
+                  style: StyleHelper.customStyle(color: AppColors.black, size: 10.sp, family: semiBold,),
                 ),
               ),
             ),

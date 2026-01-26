@@ -161,13 +161,10 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
                               );
                             }
                             return Column(
-                              children: snap.data!
-                                  .map(
-                                    (cat) => SizedBox(
+                              children: snap.data!.map((cat) =>
+                                  SizedBox(
                                       height: 150,
-                                      child: buildGridCard(
-                                        title: cat.name,
-                                        imageUrl: cat.image,
+                                      child: buildGridCard(title: cat.name, imageUrl: cat.image,
                                         onTap: () {
                                           setState(() {
                                             selectedCategory = cat;
@@ -176,8 +173,7 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
                                         },
                                       ),
                                     ),
-                                  )
-                                  .toList(),
+                                  ).toList(),
                             );
                           },
                         ),
@@ -220,19 +216,15 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
                             ? Icons.category
                             : Icons.fastfood,
                         color: Colors.white,
-                      ),
-                      const SizedBox(width: 12),
+                      ).paddingOnly(right: 12),
+                      //const SizedBox(width: 12),
                       Text(
                         currentLevel == MenuLevel.master
                             ? "Select Master Category"
                             : currentLevel == MenuLevel.category
                             ? "Select Category"
                             : "Select Products",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -275,19 +267,10 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
                                   isDense: true,
                                   contentPadding: EdgeInsets.zero,
                                 ),
-                                onChanged: (query) async {
-                                  await controller.searchProducts(query);
-                                },
+                                onChanged: (query) async {await controller.searchProducts(query);},
                               ),
                             ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.close,
-                                size: 20,
-                                color: AppColors.black,
-                              ),
-                              onPressed: toggleSearch,
-                            ),
+                            IconButton(icon: Icon(Icons.close, size: 20, color: AppColors.black,), onPressed: toggleSearch,),
                           ],
                         ),
                       ),
@@ -298,14 +281,7 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
                     if (controller.isSearch.value) {
                       return const SizedBox.shrink();
                     }
-                    return IconButton(
-                      onPressed: toggleSearch,
-                      icon: Icon(
-                        Icons.search,
-                        size: 24,
-                        color: AppColors.white,
-                      ),
-                    );
+                    return IconButton(onPressed: toggleSearch, icon: Icon(Icons.search, size: 24, color: AppColors.white,),);
                   }),
                 ],
               ),
@@ -551,9 +527,7 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
               Expanded(
                 flex: 1,
                 child: Center(
-                  child: Text(title,textAlign: TextAlign.center,   maxLines: 2,   overflow: TextOverflow.ellipsis,
-                    style: StyleHelper.customStyle(size: 6.sp, color: AppColors.white, family: medium),
-                  ),
+                  child: Text(title,textAlign: TextAlign.center,   maxLines: null,   overflow: TextOverflow.ellipsis, style: StyleHelper.customStyle(size: 4.sp, color: AppColors.white, family: medium),),
                 ),
               ),
             ],

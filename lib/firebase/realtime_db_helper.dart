@@ -70,9 +70,7 @@ class RealtimeDbHelper {
   Future<void> deleteTable(RestaurantTableModel table)async {
     if (table.id.isEmpty) {
       throw Exception("Table ID is empty. Cannot delete.");
-    }
-
-    try {
+    }try {
       return ref('restaurant_tables/${table.id}').remove();
     }catch (e){
       debugPrint("DELETE TABLE ::::::$e");
@@ -109,6 +107,22 @@ class RealtimeDbHelper {
       }
       return null;
     }
+  }
+
+  /// Find User Detail By UserId
+  Future<UserDetail?> getUserDetailByUserId(String userId) async {
+    debugPrint("Entering the Function");
+    final DatabaseReference userRef = FirebaseDatabase.instance.ref('users/$userId');
+    debugPrint("UserRef::::::::::$userRef");
+    final DataSnapshot snapshot = await userRef.get();
+    debugPrint("Snapshot :::::::::::::: $snapshot");
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    final data = snapshot.value as Map<dynamic, dynamic>;
+
+    return UserDetail.fromMap(userId, data);
   }
 
   Future<List<MasterCategoryModel>> getMasterCategories() async {
