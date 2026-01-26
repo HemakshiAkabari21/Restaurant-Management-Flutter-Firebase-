@@ -314,7 +314,7 @@ class MenuSettingController extends GetxController {
   Future<void> pickAndUploadImage() async {
     try {
       final picker = ImagePicker();
-      final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery,imageQuality: 60);
       if (pickedFile == null) return;
 
       isLoading.value = true;
