@@ -294,8 +294,7 @@ class MenuSettingScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(controller.selectedCategory.value != null ? "No products in this category" : "No products yet"),
-                  const SizedBox(height: 8),
+                  Text(controller.selectedCategory.value != null ? "No products in this category" : "No products yet").paddingOnly(bottom: 8),
                   const Text("Select a category from the Category tab first", style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
@@ -411,14 +410,12 @@ class MenuSettingScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  controller: controller.nameCtrl,
+                TextField(controller: controller.nameCtrl,
                   decoration: InputDecoration(
                     labelText: "Name",
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
                     filled: true,
-                    fillColor: Colors.white,
-                  ),
+                    fillColor: Colors.white,),
                 ),
                 SizedBox(height: 16.h),
                 if (controller.uploadedImageUrl.value != null) ...[

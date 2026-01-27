@@ -119,23 +119,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Restaurant',
-                style: StyleHelper.customStyle(
-                  color: AppColors.white,
-                  size: 10.sp,
-                  family: semiBold,
-                ),
-              ).paddingOnly(bottom: 4.h),
+              Text('Restaurant',
+                style: StyleHelper.customStyle(color: AppColors.white, size: 10.sp, family: semiBold,),).paddingOnly(bottom: 4.h),
               GestureDetector(
                 onTap: () {},
-                child: Text(
-                  'Monday, 20 March, 2023',
-                  style: StyleHelper.customStyle(
-                    color: AppColors.white.withOpacity(0.8),
-                    size: 7.sp,
-                  ),
-                ),
+                child: Text('Monday, 20 March, 2023', style: StyleHelper.customStyle(color: AppColors.white.withOpacity(0.8), size: 7.sp,),),
               ),
             ],
           ),
@@ -188,14 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       : Colors.red.shade300.withOpacity(0.5),
                   width: 2,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isAvailable ? Colors.blue : Colors.red)
-                        .withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: (isAvailable ? Colors.blue : Colors.red).withOpacity(0.2), blurRadius: 8, offset: Offset(0, 4),),],
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
