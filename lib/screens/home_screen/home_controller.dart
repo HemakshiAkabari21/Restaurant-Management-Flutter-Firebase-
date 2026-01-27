@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
+import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 
 class HomeController extends GetxController {
 
@@ -73,6 +74,7 @@ class HomeController extends GetxController {
       return;
     }
     userDetail.value = user;
+    getStorage.write(USER_TYPE, userDetail.value?.userType);
     debugPrint("User Type ::::::::::::: ${userDetail.value?.userType}");
   }
 

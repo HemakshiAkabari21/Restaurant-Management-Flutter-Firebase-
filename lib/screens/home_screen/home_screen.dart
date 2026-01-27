@@ -2,15 +2,18 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
+import 'package:restaurant_management_fierbase/model/daily_sale_model.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
 import 'package:restaurant_management_fierbase/screens/home_screen/home_controller.dart';
 import 'package:restaurant_management_fierbase/screens/menu_screen/menu_screen.dart';
 import 'package:restaurant_management_fierbase/screens/paymnet_succesfull_Screen/payment_successfull_Screen.dart';
+import 'package:restaurant_management_fierbase/screens/revenue_line_chart/revenue_line_chart_screen.dart';
 import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   HomeController homeController = Get.find<HomeController>();
-
+  RxBool isDateClick = false.obs;
 
   @override
   void initState() {
@@ -45,7 +48,9 @@ class _HomeScreenState extends State<HomeScreen> {
             buildHeader(),
       
             /// Table Grid
-            Expanded(
+            Obx(()=>isDateClick.value
+                ? Expanded(child: buildChartCard().paddingSymmetric(horizontal: 16.w,vertical: 16.h))
+                : Expanded(
               child: StreamBuilder<DatabaseEvent>(
                 stream: RealtimeDbHelper.instance.listenToData('restaurant_tables'),
                 builder: (context, snapshot) {
@@ -59,10 +64,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   final map = Map<String, dynamic>.from(raw);
                   final tables = map.entries.where((e) => e.value is Map).map((e) => RestaurantTableModel.fromMap(
                     e.key, Map<String, dynamic>.from(e.value as Map),))
-                    .toList()
+                      .toList()
                     ..sort((a, b) => a.tableNo
-                     .compareTo(b.tableNo));
-      
+                        .compareTo(b.tableNo));
+
                   return GridView.builder(
                     itemCount: tables.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -78,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ).paddingSymmetric(horizontal: 8.w);
                 },
               ),
-            ),
+            )),
             SizedBox(height: 10.h,)
           ],
         ),
@@ -122,8 +127,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Text('Restaurant',
                 style: StyleHelper.customStyle(color: AppColors.white, size: 10.sp, family: semiBold,),).paddingOnly(bottom: 4.h),
               GestureDetector(
-                onTap: () {},
-                child: Text('Monday, 20 March, 2023', style: StyleHelper.customStyle(color: AppColors.white.withOpacity(0.8), size: 7.sp,),),
+                onTap: () {isDateClick.toggle();},
+                child: Text(DateFormat('EEEE, dd MMMM, yyyy').format(DateTime.now()), style: StyleHelper.customStyle(color: AppColors.white.withOpacity(0.8), size: 7.sp,),),
               ),
             ],
           ),
@@ -207,6 +212,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget buildChartCard(){
+    return FutureBuilder<List<DaySales>>(
+      future: RealtimeDbHelper.instance.getDayWiseRevenue(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return SizedBox(
+          height: 300,
+          child: RevenueLineChart(data: snapshot.data!),
+        );
+      },
     );
   }
 

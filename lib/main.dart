@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:get/get_navigation/src/routes/default_route.dart';
@@ -23,7 +24,9 @@ void main() {
     HttpOverrides.global = MyHttpOverrides();
     await notificationSetup();
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
-    runApp(const MyApp());
+    SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight,]).then((_) {
+      runApp(const MyApp());
+    });
   }, (error, stack) => FirebaseCrashlytics.instance.recordError(error, stack));
 }
 

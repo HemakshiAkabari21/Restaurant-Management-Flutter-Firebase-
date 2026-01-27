@@ -369,10 +369,10 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
         }
 
         return GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate:  SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+            crossAxisSpacing: 2.w,
+            mainAxisSpacing: 6.h,
           ),
           itemCount: snap.data!.length,
           itemBuilder: (_, index) {
@@ -789,143 +789,6 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
       ),
     );
   }
-
-/*  Widget buildCartActions() {
-    final total = cartItems.fold<double>(0, (sum, item) => sum + (item.productPrice ?? 0) * item.productQty,);
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8),),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Total:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                Text("₹${total.toStringAsFixed(2)}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: cartItems.isEmpty ? null : placeOrder,
-            style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 45), backgroundColor: Color(0xFF1a2847)),
-            child: Text("Place Order", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: bold),),
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF1a2847),
-              minimumSize: const Size(double.infinity, 45),
-            ),
-            onPressed: cartItems.isEmpty ? null : generateBill,
-            child: Text("Generate Bill", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: bold),),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildCartList() {
-    if (cartItems.isEmpty) {
-      return const Center(child: Text("No items added"));
-    }
-
-    return ListView.builder(
-      itemCount: cartItems.length,
-      itemBuilder: (_, index) {
-        final item = cartItems[index];
-        RxBool isHalf = false.obs;
-        final itemTotal = item.productPrice * item.productQty;
-
-        return Card(
-          margin: EdgeInsets.symmetric(horizontal:4.w,vertical: 4.h),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12.r),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: *//*isAvailable*//*
-                      *//*?*//* [Color(0xFF2d4875), Color(0xFF1a2847)]
-                  // : [Color(0xFFff6b6b), Color(0xFFee5a6f)],
-                  ),
-            ),
-            padding: EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(item.productName, style: StyleHelper.customStyle(family: bold, color: AppColors.white, size: 4.sp),
-                      ),
-                    ),
-                    Text("₹${item.productPrice}", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: semiBold),),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () => updateQty(item, -1),
-                          color: Colors.red,
-                        ),
-                        Text(item.productQty.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white),),
-                        IconButton(
-                          icon: const Icon(Icons.add_circle_outline),
-                          onPressed: () => updateQty(item, 1),
-                          color: Colors.green,
-                        ),
-                      ],
-                    ),
-                    Text("₹${(itemTotal).toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.white),),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: "Special note",
-                          isDense: true,
-                          hintStyle: StyleHelper.customStyle(color: AppColors.white, size: 4.sp,),
-                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white),),
-                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white),),
-                        ),
-                        onChanged: (val) => updateNote(item, val),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Transform.scale(
-                          scale: 0.5,
-                          child: Switch(
-                            value: isHalf.value,
-                            activeTrackColor: Color(0xFF1a2847),
-                            activeColor: AppColors.white,
-                            inactiveThumbColor: AppColors.black,
-                            inactiveTrackColor: AppColors.white,
-                            onChanged: (v) {
-                              isHalf.value = v;
-                              updateIsHalf(item, isHalf.value ? 1 : 0);
-                            },
-                          ),
-                        ),
-                        Text("Is Half",style: StyleHelper.customStyle(color: AppColors.white,size: 12),),
-                      ],
-                    ),
-                  ],
-                )
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }*/
 
   void addToCart(ProductModel p) {
     controller.addToCart(cartItems: cartItems, product: p,);

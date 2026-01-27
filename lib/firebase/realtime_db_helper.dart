@@ -2,6 +2,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
 import 'package:restaurant_management_fierbase/model/category_model.dart';
+import 'package:restaurant_management_fierbase/model/daily_sale_model.dart';
 import 'package:restaurant_management_fierbase/model/product_model.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
@@ -230,4 +231,32 @@ class RealtimeDbHelper {
       },
     );
   }
+
+  Future<List<DaySales>> getDayWiseRevenue() async {
+    final snap = await ref('orders').get();
+    if (!snap.exists) return [];
+
+    final Map<dynamic, dynamic> orders =
+    Map<dynamic, dynamic>.from(snap.value as Map);
+
+    final Map<String, double> dailyTotal = {};
+
+    for (var entry in orders.entries) {
+      final data = Map<String, dynamic>.from(entry.value);
+
+      final dateTime = DateTime.parse(data['order_date']);
+      final dayKey =
+          "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
+
+      final total = double.tryParse(data['order_total'].toString()) ?? 0.0;
+
+      dailyTotal[dayKey] = (dailyTotal[dayKey] ?? 0) + total;
+    }
+
+    return dailyTotal.entries.map((e) {
+      return DaySales(DateTime.parse(e.key), e.value);
+    }).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+  }
+
 }

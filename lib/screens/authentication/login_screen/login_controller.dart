@@ -42,6 +42,8 @@ class LoginController extends GetxController{
     }
     getStorage.write(USER_ID, user.id);
     getStorage.write(USER_DETAIL, user.toMap());
+    getStorage.write(USER_TYPE, user.userType);
+    debugPrint("UserType Save IN Log IN screen ::::::::: ${getStorage.read(USER_TYPE)}");
     getStorage.write(IS_LOGIN, true);
 
     Get.offAll(() => MainLayoutScreen());
