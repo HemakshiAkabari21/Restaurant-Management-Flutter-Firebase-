@@ -14,7 +14,10 @@ class ManagerController extends GetxController{
   final isSearch = false.obs;
   final searchController = TextEditingController();
   final searchResults = <ProductModel>[].obs;
-  RxString tableId = ''.obs;
+  RxString selectedTableId = ''.obs;
+  RxString selectedMasterId = ''.obs;
+  RxString selectedCategoryId = ''.obs;
+  RxString selectedProductId = ''.obs;
 
   @override
   void onClose() {

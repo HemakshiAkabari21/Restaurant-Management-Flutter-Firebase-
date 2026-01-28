@@ -6,10 +6,13 @@ import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
+import 'package:restaurant_management_fierbase/model/master_category_model.dart';
 import 'package:restaurant_management_fierbase/model/product_model.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 import 'package:restaurant_management_fierbase/screens/manager_screen/manager_controller.dart';
 import 'package:restaurant_management_fierbase/screens/paymnet_succesfull_Screen/payment_successfull_Screen.dart';
+
+enum MenuLevel { master, category, product }
 
 class ManagerScreen extends StatefulWidget {
   const ManagerScreen({super.key});
@@ -18,15 +21,63 @@ class ManagerScreen extends StatefulWidget {
   State<ManagerScreen> createState() => _ManagerScreenState();
 }
 
-class _ManagerScreenState extends State<ManagerScreen> {
+class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProviderStateMixin {
   List<CartItemModel> cartItems = [];
+  List<MasterCategoryModel> leftMasters = [];
+  late Future<List<MasterCategoryModel>> masterFuture;
+  AnimationController? animationController;
+  Animation<double>? searchAnimation;
 
   ManagerController controller = Get.put(ManagerController());
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    // Initialize animation controller
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    searchAnimation = CurvedAnimation(
+      parent: animationController!,
+      curve: Curves.easeInOut,
+    );
+
+    masterFuture = controller.getMasters();
+    loadLeftMasters();
+    loadCart();
+    super.initState();
+  }
+
+  Future<void> loadLeftMasters() async {
+    leftMasters = await controller.getMasters();
+    setState(() {});
+  }
+
+  void toggleSearch() {
+    if (controller.isSearch.value) {
+      animationController?.reverse();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        controller.clearSearch();
+      });
+    } else {
+      controller.isSearch.value = true;
+      animationController?.forward();
+    }
+  }
+
+  Future<void> loadCart() async {
+    cartItems = await controller.getCart(controller.selectedTableId.value ?? '');
+    debugPrint("TABLE ${controller.selectedTableId.value ?? ''} CART COUNT: ${cartItems.length}");
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Colors.grey.shade200,
         body: Row(
           children: [
             Expanded(
@@ -82,7 +133,26 @@ class _ManagerScreenState extends State<ManagerScreen> {
                       },
                     ),
                   ),
-                  Divider(color: AppColors.darkGray,thickness: 0.5,)
+                  Divider(color: AppColors.darkGray,thickness: 0.5,),
+                  SizedBox(
+                    height: 50.h,
+                    child: FutureBuilder<List<MasterCategoryModel>>(
+                      future: controller.getMasters(),
+                      builder: (_, snap) {
+                        if (!snap.hasData) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        return ListView.builder(
+                         scrollDirection: Axis.horizontal,
+                          itemCount: snap.data!.length,
+                          itemBuilder: (_, index) {
+                            final master = snap.data![index];
+                            return buildMainCategory(masterCategory: master);
+                          },
+                        );
+                      },
+                    ),
+                  ).paddingSymmetric(horizontal: 2.w)
                 ],
               ),
             ),
@@ -93,6 +163,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
     );
   }
 
+  /// Table
   Widget buildTableCard({required RestaurantTableModel table}) {
     final isAvailable = table.status == "available";
     return Container(
@@ -104,7 +175,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isAvailable ? [Color(0xFF2d4875), Color(0xFF1a2847)] : [Color(0xFFff6b6b), Color(0xFFee5a6f)],
+            colors: isAvailable ? [AppColors.primaryColor, AppColors.secondaryPrimaryColor] : [AppColors.errorPrimaryColor, AppColors.errorSecondaryPrimaryColor],
           )),
       child: Center(
           child: Text(
@@ -113,6 +184,29 @@ class _ManagerScreenState extends State<ManagerScreen> {
       )),
     );
   }
+
+  ///Master Category
+  Widget buildMainCategory({required MasterCategoryModel masterCategory}){
+    RxBool isSelected = (controller.selectedMasterId.value == masterCategory.id).obs;
+    return Obx(()=> GestureDetector(
+        onTap: (){
+          controller.selectedMasterId.value = masterCategory.id;
+          isSelected.value = controller.selectedMasterId.value == masterCategory.id;
+          setState(() {});
+        },
+        child: Container(
+          height: 40.h,
+            alignment: Alignment.center,
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            decoration: BoxDecoration(
+              color: isSelected.value ? AppColors.secondaryPrimaryColor : AppColors.white,
+              border: Border.all(color: AppColors.secondaryPrimaryColor,width: 0.5)
+            ),
+            child: Text(masterCategory.name,style: StyleHelper.customStyle(color: isSelected.value ? AppColors.white : AppColors.black,size: 4.sp,family: medium),),
+          ),
+      ),
+    );
+}
 
   /// CART
   Widget buildCartPanel() {
@@ -148,8 +242,6 @@ class _ManagerScreenState extends State<ManagerScreen> {
       ),
     );
   }
-
-  // In menu_screen.dart - Replace the buildCartList method
 
   Widget buildCartList() {
     if (cartItems.isEmpty) {
@@ -296,7 +388,6 @@ class _ManagerScreenState extends State<ManagerScreen> {
     );
   }
 
-// Also update the buildCartActions method to calculate total correctly
   Widget buildCartActions() {
     // Calculate total considering half portions
     final total = cartItems.fold<double>(0, (sum, item) {
@@ -333,7 +424,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
           ),
           const SizedBox(height: 12),
           ElevatedButton(
-            onPressed: () => cartItems.isEmpty ? null : placeOrder(tableId: controller.tableId.value ?? ''),
+            onPressed: () => cartItems.isEmpty ? null : placeOrder(tableId: controller.selectedTableId.value ?? ''),
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 45),
               backgroundColor: Color(0xFF1a2847),
@@ -353,7 +444,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
               backgroundColor: Color(0xFF1a2847),
               minimumSize: const Size(double.infinity, 45),
             ),
-            onPressed: () => cartItems.isEmpty ? null : generateBill(tableId: controller.tableId.value ?? ''),
+            onPressed: () => cartItems.isEmpty ? null : generateBill(tableId: controller.selectedTableId.value ?? ''),
             child: Text(
               "Generate Bill",
               style: StyleHelper.customStyle(
@@ -369,28 +460,17 @@ class _ManagerScreenState extends State<ManagerScreen> {
   }
 
   void addToCart(ProductModel p) {
-    controller.addToCart(
-      cartItems: cartItems,
-      product: p,
-    );
+    controller.addToCart(cartItems: cartItems, product: p,);
     setState(() {});
   }
 
   void updateQty(CartItemModel item, int change) {
-    controller.updateQty(
-      cartItems: cartItems,
-      item: item,
-      change: change,
-    );
+    controller.updateQty(cartItems: cartItems, item: item, change: change,);
     setState(() {});
   }
 
   void updateNote(CartItemModel item, String note) {
-    controller.updateNote(
-      cartItems: cartItems,
-      item: item,
-      note: note,
-    );
+    controller.updateNote(cartItems: cartItems, item: item, note: note,);
     setState(() {});
   }
 
@@ -400,23 +480,11 @@ class _ManagerScreenState extends State<ManagerScreen> {
   }
 
   void generateBill({required String tableId}) {
-    Get.to(
-      () => PaymentScreen(
-        tableId: tableId ?? '',
-        cartItems: cartItems,
-      ),
-    );
+    Get.to(() => PaymentScreen(tableId: tableId ?? '', cartItems: cartItems,),);
   }
 
   Future<void> placeOrder({required String tableId}) async {
-    await controller.placeOrder(
-      tableId: tableId ?? '',
-      cartItems: cartItems,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Order placed successfully"),
-      ),
-    );
+    await controller.placeOrder(tableId: tableId ?? '', cartItems: cartItems,);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Order placed successfully"),),);
   }
 }

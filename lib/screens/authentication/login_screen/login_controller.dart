@@ -4,6 +4,7 @@ import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/screens/home_screen/home_screen.dart';
 import 'package:restaurant_management_fierbase/screens/main_layout_screen/main_layout_screen.dart';
+import 'package:restaurant_management_fierbase/screens/manager_screen/manager_screen.dart';
 import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
 
@@ -45,8 +46,12 @@ class LoginController extends GetxController{
     getStorage.write(USER_TYPE, user.userType);
     debugPrint("UserType Save IN Log IN screen ::::::::: ${getStorage.read(USER_TYPE)}");
     getStorage.write(IS_LOGIN, true);
+    if(user.userType == 'Manager'){
+      Get.offAll(()=>ManagerScreen());
+    }else{
+      Get.offAll(() => MainLayoutScreen());
+    }
 
-    Get.offAll(() => MainLayoutScreen());
     showErrorSnackBar(title: 'Success', message: 'Login successful', color: AppColors.green);
   }
 
