@@ -200,10 +200,12 @@ enum PaymentMethod { cash, card, upi, online, cheque }
 class PaymentSuccessfullyController extends GetxController {
   final String tableId;
   final List<CartItemModel> cartItems;
+  final String tableNo;
 
   PaymentSuccessfullyController({
     required this.tableId,
     required this.cartItems,
+    required this.tableNo
   });
 
   /// ================= CUSTOMER =================

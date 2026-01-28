@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
         } else {
           if(homeController.userDetail.value?.userType == 'Cashier'){
             final cartItems = await RealtimeDbHelper.instance.getTableCartList(table.id);
-            Get.to(()=>PaymentScreen(tableId: table.id, cartItems: cartItems,));
+            Get.to(()=>PaymentScreen(tableId: table.id, cartItems: cartItems, tableNo: '${table.tableNo}',));
           }else{
             Get.to(()=>MenuScreen(tableId: table.id));
           }

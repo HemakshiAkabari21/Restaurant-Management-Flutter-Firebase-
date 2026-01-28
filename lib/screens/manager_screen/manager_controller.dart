@@ -5,6 +5,7 @@ import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
 import 'package:restaurant_management_fierbase/model/category_model.dart';
 import 'package:restaurant_management_fierbase/model/master_category_model.dart';
 import 'package:restaurant_management_fierbase/model/product_model.dart';
+import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 
 class ManagerController extends GetxController{
 
@@ -14,10 +15,22 @@ class ManagerController extends GetxController{
   final isSearch = false.obs;
   final searchController = TextEditingController();
   final searchResults = <ProductModel>[].obs;
+
+
+  // selection
   RxString selectedTableId = ''.obs;
   RxString selectedMasterId = ''.obs;
   RxString selectedCategoryId = ''.obs;
   RxString selectedProductId = ''.obs;
+  RxString selectedTable = ''.obs;
+
+// cached data
+  RxList<MasterCategoryModel> masterList = <MasterCategoryModel>[].obs;
+  RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
+  RxList<ProductModel> productList = <ProductModel>[].obs;
+
+// ui feedback
+  RxBool isCategorySwitching = false.obs;
 
   @override
   void onClose() {
@@ -138,6 +151,13 @@ class ManagerController extends GetxController{
     searchController.clear();
     searchResults.value = [];
     isSearch.value = false;
+  }
+
+  Future<void> updateTable(RestaurantTableModel table) async {
+    await RealtimeDbHelper.instance.updateData(
+      path: 'restaurant_tables/${table.id}',
+      data: table.toMap(),
+    );
   }
 
 }

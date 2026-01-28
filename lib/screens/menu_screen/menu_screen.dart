@@ -73,7 +73,6 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
 
   Future<void> loadCart() async {
     cartItems = await controller.getCart(widget.tableId ?? '');
-    debugPrint("TABLE ${widget.tableId} CART COUNT: ${cartItems.length}");
     setState(() {});
   }
 
@@ -811,7 +810,7 @@ class _MenuScreenState extends State<MenuScreen>with SingleTickerProviderStateMi
   }
 
   void generateBill() {
-    Get.to(() => PaymentScreen(tableId: widget.tableId ?? '', cartItems: cartItems,),);
+    Get.to(() => PaymentScreen(tableId: widget.tableId ?? '', cartItems: cartItems, tableNo: '',),);
   }
 
   Future<void> placeOrder() async {

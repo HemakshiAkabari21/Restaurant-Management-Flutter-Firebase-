@@ -386,8 +386,8 @@ import 'package:restaurant_management_fierbase/screens/paymnet_succesfull_Screen
 class PaymentScreen extends StatelessWidget {
   final PaymentSuccessfullyController controller;
 
-  PaymentScreen({super.key, required String tableId, required List<CartItemModel> cartItems})
-      : controller = Get.put(PaymentSuccessfullyController(tableId: tableId, cartItems: cartItems));
+  PaymentScreen({super.key, required String tableId, required List<CartItemModel> cartItems,required String tableNo})
+      : controller = Get.put(PaymentSuccessfullyController(tableId: tableId, cartItems: cartItems, tableNo: tableNo));
 
   @override
   Widget build(BuildContext context) {
@@ -396,7 +396,7 @@ class PaymentScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Color(0xFF1a2847),
         title: Text(
-          "Billing & Payment",
+          "Billing & Payment of Table No.${controller.tableNo}",
           style: StyleHelper.customStyle(
             color: Colors.white,
             size: 8.sp,
