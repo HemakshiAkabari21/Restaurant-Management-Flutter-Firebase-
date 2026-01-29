@@ -15,5 +15,6 @@ const USER_LAST_OTP = 'user_last_otp';
 const SUPPORT_WHATSAPP_MOBILE_NO = "support_whatsapp_mobile_no";
 const SELECTED_LANGUAGE = 'selected_language';
 const SELECTED_LANGUAGE_CODE = 'selected_language_code';
+const LAST_RESET_KEY = 'last_reset_key';
 enum MenuLevel { master, category, product }
 

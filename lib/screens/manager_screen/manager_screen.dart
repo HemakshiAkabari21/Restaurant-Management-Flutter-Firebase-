@@ -1,4 +1,3 @@
-
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -30,6 +29,8 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
   AnimationController? animationController;
   Animation<double>? searchAnimation;
   RxBool isLoading = false.obs;
+  RxBool isCategoryLoading = false.obs;
+  RxBool isProductLoading = false.obs;
 
   ManagerController controller = Get.put(ManagerController());
 
@@ -46,22 +47,17 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
       parent: animationController!,
       curve: Curves.easeInOut,
     );
-
-    masterFuture = controller.getMasters();
-    loadLeftMasters();
-  }
-
-  Future<void> loadLeftMasters() async {
-    leftMasters = await controller.getMasters();
-    if (mounted) setState(() {});
+    loadCategory();
   }
 
   Future<void> loadCategory() async {
-    categoryList.value = await controller.getCategories(controller.selectedMasterId.value);
+    categoryList.value = await controller.getCategories();
   }
 
   Future<void> loadProduct() async {
+    // isProductLoading.value = true;
     products.value = await controller.getProducts(controller.selectedCategoryId.value);
+    isProductLoading.value = false;
   }
 
   Future<void> loadCart() async {
@@ -84,25 +80,40 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               child: Column(
                 children: [
                   SizedBox(
-                    height: 60.h,
+                    height: 50.h,
                     child: StreamBuilder<DatabaseEvent>(
                       stream: RealtimeDbHelper.instance.listenToData('restaurant_tables'),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
-                          return Center(child: Text('No tables created yet', style: StyleHelper.customStyle(color: AppColors.black, size: 10.sp,),),);
+                          return Center(
+                            child: Text(
+                              'No tables created yet',
+                              style: StyleHelper.customStyle(
+                                color: AppColors.black,
+                                size: 10.sp,
+                              ),
+                            ),
+                          );
                         }
                         final raw = snapshot.data!.snapshot.value;
                         if (raw is! Map) {
                           return Center(
-                            child: Text('Invalid table data', style: StyleHelper.customStyle(color: AppColors.black, size: 10.sp,),),);
+                            child: Text(
+                              'Invalid table data',
+                              style: StyleHelper.customStyle(
+                                color: AppColors.black,
+                                size: 10.sp,
+                              ),
+                            ),
+                          );
                         }
                         final map = Map<String, dynamic>.from(raw);
                         final tables = map.entries
                             .where((e) => e.value is Map)
                             .map((e) => RestaurantTableModel.fromMap(
-                          e.key,
-                          Map<String, dynamic>.from(e.value as Map),
-                        ))
+                                  e.key,
+                                  Map<String, dynamic>.from(e.value as Map),
+                                ))
                             .toList()
                           ..sort((a, b) => a.tableNo.compareTo(b.tableNo));
 
@@ -118,62 +129,46 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                     ),
                   ),
                   Divider(color: AppColors.darkGray, thickness: 0.5),
-                  SizedBox(
-                    height: 40.h,
-                    child: FutureBuilder<List<MasterCategoryModel>>(
-                      future: controller.getMasters(),
-                      builder: (_, snap) {
-                        if (!snap.hasData) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: snap.data!.length,
-                          itemBuilder: (_, index) {
-                            final master = snap.data![index];
-                            return buildMainCategory(masterCategory: master);
-                          },
-                        );
-                      },
-                    ),
-                  ).paddingSymmetric(horizontal: 2.w),
-                  Divider(color: AppColors.darkGray, thickness: 0.5),
-                  SizedBox(
-                    height: 40.h,
-                    child: Obx(() {
-                      if (controller.selectedMasterId.isEmpty) {
-                        return const SizedBox.shrink();
+                  FutureBuilder<List<CategoryModel>>(
+                    future: controller.getCategories(),
+                    builder: (_, snap) {
+                      if (!snap.hasData) {
+                        return Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator()));
                       }
-                      return FutureBuilder<List<CategoryModel>>(
-                        future: controller.getCategories(controller.selectedMasterId.value),
-                        builder: (_, snap) {
-                          if (!snap.hasData) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          return ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: snap.data!.length,
-                            itemBuilder: (_, index) {
-                              final category = snap.data![index];
-                              return buildCategory(category: category);
-                            },
-                          );
-                        },
+                      return Obx(
+                        () => isCategoryLoading.value
+                            ? SizedBox(height: 10.h, width: 10.w, child: CircularProgressIndicator())
+                            : GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, mainAxisSpacing: 1, childAspectRatio: 4.50),
+                                itemCount: snap.data!.length,
+                                itemBuilder: (_, index) {
+                                  final category = snap.data![index];
+                                  return buildCategory(category: category);
+                                },
+                              ),
                       );
-                    }),
+                    },
                   ).paddingSymmetric(horizontal: 2.w),
                   Divider(color: AppColors.darkGray, thickness: 0.5),
                   Expanded(child: buildProductGrid().paddingSymmetric(horizontal: 2.w))
                 ],
               ),
             ),
-            Expanded(flex: 3,
+            Expanded(
+                flex: 3,
                 child: Row(
-              children: [
-                Container(height: Get.height,color: AppColors.darkGray,width: (0.1).w,),
-                buildCartPanel(),
-              ],
-            ))
+                  children: [
+                    Container(
+                      height: Get.height,
+                      color: AppColors.darkGray,
+                      width: (0.1).w,
+                    ),
+                    buildCartPanel(),
+                  ],
+                ))
           ],
         ),
       ),
@@ -200,24 +195,17 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
 
             // Load master categories if not already loaded
             if (leftMasters.isEmpty) {
-              await loadLeftMasters();
-            }
-
-            // Select first master category
-            if (leftMasters.isNotEmpty) {
-              controller.selectedMasterId.value = leftMasters.first.id;
               await loadCategory();
-
-              // Select first category
-              if (categoryList.isNotEmpty) {
-                controller.selectedCategoryId.value = categoryList.first.id;
-                await loadProduct();
-              }
+            }
+            // Select first category
+            if (categoryList.isNotEmpty) {
+              controller.selectedCategoryId.value = categoryList.first.id;
+              await loadProduct();
             }
           }
         },
         child: Container(
-          height: 50.h,
+          height: 40.h,
           width: 20.w,
           margin: EdgeInsets.all(2.sp),
           decoration: BoxDecoration(
@@ -228,58 +216,30 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               colors: isSelected
                   ? [Color(0xFF4CAF50), Color(0xFF45a049)] // Selected - Green gradient
                   : isAvailable
-                  ? [AppColors.primaryColor, AppColors.secondaryPrimaryColor] // Available
-                  : [AppColors.errorPrimaryColor, AppColors.errorSecondaryPrimaryColor], // Booked
+                      ? [AppColors.primaryColor, AppColors.secondaryPrimaryColor] // Available
+                      : [AppColors.errorPrimaryColor, AppColors.errorSecondaryPrimaryColor], // Booked
             ),
             border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
           ),
-          child: Center(child: Text("${table.tableNo}", style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp, family: medium,),),
+          child: Center(
+            child: Text(
+              "${table.tableNo}",
+              style: StyleHelper.customStyle(
+                color: AppColors.white,
+                size: 6.sp,
+                family: medium,
+              ),
+            ),
           ),
         ),
       );
     });
   }
 
-  /// Master Category
-  Widget buildMainCategory({required MasterCategoryModel masterCategory}) {
-    return Obx(() {
-        bool isSelected = controller.selectedMasterId.value == masterCategory.id;
-        return GestureDetector(
-          onTap: () async {
-            controller.selectedMasterId.value = masterCategory.id;
-            await loadCategory();
-
-            // Auto-select first category
-            if (categoryList.isNotEmpty) {
-              controller.selectedCategoryId.value = categoryList.first.id;
-              await loadProduct();
-            }
-          },
-          child: Container(
-            height: 30.h,
-            alignment: Alignment.center,
-            padding: EdgeInsets.symmetric(horizontal: 8.w),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.secondaryPrimaryColor : AppColors.white,
-              border: Border.all(color: AppColors.secondaryPrimaryColor, width: 0.5),
-            ),
-            child: Text(
-              masterCategory.name,
-              style: StyleHelper.customStyle(
-                color: isSelected ? AppColors.white : AppColors.black,
-                size: 4.sp,
-                family: medium,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   /// Category
   Widget buildCategory({required CategoryModel category}) {
-    return Obx(() {
+    return Obx(
+      () {
         bool isSelected = controller.selectedCategoryId.value == category.id;
         return GestureDetector(
           onTap: () async {
@@ -289,7 +249,6 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
           child: Container(
             height: 30.h,
             alignment: Alignment.center,
-            padding: EdgeInsets.symmetric(horizontal: 8.w),
             decoration: BoxDecoration(
               color: isSelected ? AppColors.secondaryPrimaryColor : AppColors.white,
               border: Border.all(color: AppColors.secondaryPrimaryColor, width: 0.5),
@@ -319,19 +278,22 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
         future: controller.getProducts(controller.selectedCategoryId.value),
         builder: (_, snap) {
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator()));
           }
-
-          return GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 6,
-              crossAxisSpacing: 2.w,
-              mainAxisSpacing: 2.h,
-            ),
-            itemCount: snap.data!.length,
-            itemBuilder: (_, index) {
-              return buildProductCard(snap.data![index]);
-            },
+          return Obx(
+            () => isProductLoading.value
+                ? Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator()))
+                : GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 8,
+                      crossAxisSpacing: 2.w,
+                      mainAxisSpacing: 2.h,
+                    ),
+                    itemCount: snap.data!.length,
+                    itemBuilder: (_, index) {
+                      return buildProductCard(snap.data![index]);
+                    },
+                  ),
           );
         },
       );
@@ -345,15 +307,8 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
       // Find product in cart safely
       try {
         final cartItem = cartItems.firstWhere(
-              (e) => e.productId == product.id,
-          orElse: () => CartItemModel(
-            productQty: 0,
-            productId: '',
-            productName: '',
-            productPrice: 0.0,
-            isHalf: 0,
-            productNote: '',
-          ),
+          (e) => e.productId == product.id,
+          orElse: () => CartItemModel(productQty: 0, productId: '', productName: '', productPrice: 0.0, isHalf: 0, productNote: ''),
         );
 
         // Only use quantity if we found a valid cart item
@@ -365,23 +320,31 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
       }
 
       CartItemModel item = CartItemModel(
-        productId: product.id,
-        productName: product.name,
-        productPrice: double.tryParse(product.price ?? '') ?? 0,
-        productQty: productQty,
-        isHalf: 0,
-        productNote: '',
-      );
+          productId: product.id,
+          productName: product.name,
+          productPrice: double.tryParse(product.price ?? '') ?? 0,
+          productQty: productQty,
+          isHalf: 0,
+          productNote: '');
 
       return GestureDetector(
         onTap: () {
           if (controller.selectedTableId.isEmpty) {
-            Get.snackbar('No Table Selected', 'Please select a table first', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white,);
+            Get.snackbar(
+              'No Table Selected',
+              'Please select a table first',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
             return;
           }
 
           if (productQty == 0) {
-            controller.addToCart(cartItems: cartItems, product: product,);
+            controller.addToCart(
+              cartItems: cartItems,
+              product: product,
+            );
             cartItems.refresh();
           } else {
             updateQty(item, 1);
@@ -406,8 +369,24 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(product.name ?? '', maxLines: null, textAlign: TextAlign.center, style: StyleHelper.customStyle(color: AppColors.black, size: 5.sp, family: semiBold,),),
-              Text(product.price, style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: regular,),),
+              Text(
+                product.name ?? '',
+                maxLines: null,
+                textAlign: TextAlign.center,
+                style: StyleHelper.customStyle(
+                  color: AppColors.black,
+                  size: 5.sp,
+                  family: semiBold,
+                ),
+              ),
+              Text(
+                "₹${product.price}",
+                style: StyleHelper.customStyle(
+                  color: AppColors.black,
+                  size: 4.sp,
+                  family: medium,
+                ),
+              ),
               /*if (productQty > 0)
                 Container(
                   margin: EdgeInsets.only(top: 4.h),
@@ -441,10 +420,23 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               width: Get.width,
               child: Column(
                 children: [
-                  Text("Selected Items", style:  StyleHelper.customStyle(size: 20, family: bold, color: AppColors.white,),),
+                  Text(
+                    "Selected Items",
+                    style: StyleHelper.customStyle(
+                      size: 20,
+                      family: bold,
+                      color: AppColors.white,
+                    ),
+                  ),
                   Obx(() {
                     if (controller.selectedTableId.isNotEmpty) {
-                      return Text("Table: ${controller.selectedTable.value}", style: TextStyle(fontSize: 14, color: AppColors.white.withOpacity(0.8),),);
+                      return Text(
+                        "Table: ${controller.selectedTable.value}",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.white.withOpacity(0.8),
+                        ),
+                      );
                     }
                     return const SizedBox.shrink();
                   }),
@@ -462,138 +454,176 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
   Widget buildCartList() {
     return Obx(() {
       // Filter out any invalid cart items
-      final validCartItems = cartItems.where((item) =>
-      item.productId.isNotEmpty &&
-          item.productName.isNotEmpty &&
-          item.productQty > 0
-      ).toList();
+      final validCartItems = cartItems.where((item) => item.productId.isNotEmpty && item.productName.isNotEmpty && item.productQty > 0).toList();
 
       if (validCartItems.isEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text("No items added", style:StyleHelper.customStyle(size: 18, color: Colors.grey, family: medium,),),
+              Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey).paddingOnly(bottom: 16.h),
+              Text(
+                "No items added",
+                style: StyleHelper.customStyle(
+                  size: 18,
+                  color: Colors.grey,
+                  family: medium,
+                ),
+              ),
             ],
           ),
         );
       }
 
-      return Obx(()=>isLoading.value
-          ? Center(
-            child: SizedBox(height: 50, width: 50,
-            child: CircularProgressIndicator()),
-          )
+      return Obx(() => isLoading.value
+          ? Center(child: SizedBox(height: 50, width: 50, child: CircularProgressIndicator()))
           : ListView.builder(
-        itemCount: validCartItems.length,
-        itemBuilder: (_, index) {
-          final item = validCartItems[index];
-          final isHalf = item.isHalf == 1;
-          final effectiveQty = isHalf ? (item.productQty - 0.5) : item.productQty.toDouble();
-          final itemTotal = item.productPrice * effectiveQty;
+              itemCount: validCartItems.length,
+              itemBuilder: (_, index) {
+                final item = validCartItems[index];
+                final isHalf = item.isHalf == 1;
+                final effectiveQty = isHalf ? (item.productQty - 0.5) : item.productQty.toDouble();
+                final itemTotal = item.productPrice * effectiveQty;
 
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF2d4875), Color(0xFF1a2847)],
-                ),
-              ),
-              padding: EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(item.productName, style: StyleHelper.customStyle(family: bold, color: AppColors.white, size: 4.sp,)),
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF2d4875), Color(0xFF1a2847)],
                       ),
-                      Text("₹${item.productPrice.toStringAsFixed(2)}", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: semiBold,),),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: () => updateQty(item, -1),
-                            color: Colors.red,
-                          ),
-                          Text(isHalf ? "${item.productQty - 0.5}" : item.productQty.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,),),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline),
-                            onPressed: () => updateQty(item, 1),
-                            color: Colors.green,
-                          ),
-                        ],
-                      ),
-                      Text("₹${itemTotal.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.white,),),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: "Special note",
-                            isDense: true,
-                            hintStyle: StyleHelper.customStyle(color: AppColors.white, size: 4.sp,),
-                            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white),),
-                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white),),
-                          ),
-                          onChanged: (val) {
-                            controller.updateNote(cartItems: cartItems, item: item, note: val,);
-                            cartItems.refresh();
-                          },
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Transform.scale(
-                            scale: 0.5,
-                            child: Switch(
-                              value: isHalf,
-                              activeTrackColor: Color(0xFF1a2847),
-                              activeColor: AppColors.white,
-                              inactiveThumbColor: AppColors.black,
-                              inactiveTrackColor: AppColors.white,
-                              onChanged: (v) {
-                                controller.updateIsHalf(cartItems: cartItems, item: item, isHalf: v ? 1 : 0);
-                                cartItems.refresh();
-
-                              },
+                    ),
+                    padding: EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                                child: Text(item.productName,
+                                    style: StyleHelper.customStyle(
+                                      family: bold,
+                                      color: AppColors.white,
+                                      size: 4.sp,
+                                    ))),
+                            Text(
+                              "₹${item.productPrice.toStringAsFixed(2)}",
+                              style: StyleHelper.customStyle(
+                                color: AppColors.white,
+                                size: 4.sp,
+                                family: semiBold,
+                              ),
                             ),
-                          ),
-                          Text("Is Half", style: StyleHelper.customStyle(color: AppColors.white, size: 12,),),
-                        ],
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-          );
-        },
-      ));
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                  onPressed: () => updateQty(item, -1),
+                                  color: Colors.red,
+                                ),
+                                Text(
+                                  isHalf ? "${item.productQty - 0.5}" : item.productQty.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  onPressed: () => updateQty(item, 1),
+                                  color: Colors.green,
+                                ),
+                              ],
+                            ),
+                            Text(
+                              "₹${itemTotal.toStringAsFixed(2)}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    hintText: "Special note",
+                                    isDense: true,
+                                    hintStyle: StyleHelper.customStyle(
+                                      color: AppColors.white,
+                                      size: 4.sp,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: AppColors.white),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: AppColors.white),
+                                    ),
+                                  ),
+                                  onChanged: (val) {
+                                    controller.updateNote(
+                                      cartItems: cartItems,
+                                      item: item,
+                                      note: val,
+                                    );
+                                    cartItems.refresh();
+                                  },
+                                ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Transform.scale(
+                                  scale: 0.5,
+                                  child: Switch(
+                                    value: isHalf,
+                                    activeTrackColor: Color(0xFF1a2847),
+                                    activeColor: AppColors.white,
+                                    inactiveThumbColor: AppColors.black,
+                                    inactiveTrackColor: AppColors.white,
+                                    onChanged: (v) {
+                                      controller.updateIsHalf(cartItems: cartItems, item: item, isHalf: v ? 1 : 0);
+                                      cartItems.refresh();
+                                    },
+                                  ),
+                                ),
+                                Text(
+                                  "Is Half",
+                                  style: StyleHelper.customStyle(
+                                    color: AppColors.white,
+                                    size: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ));
     });
   }
 
   Widget buildCartActions() {
     return Obx(() {
       // Filter valid cart items
-      final validCartItems = cartItems.where((item) =>
-      item.productId.isNotEmpty &&
-          item.productQty > 0
-      ).toList();
+      final validCartItems = cartItems.where((item) => item.productId.isNotEmpty && item.productQty > 0).toList();
 
       final total = validCartItems.fold<double>(0, (sum, item) {
         final effectiveQty = item.isHalf == 1 ? (item.productQty - 0.5) : item.productQty.toDouble();
@@ -613,22 +643,37 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Total:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                  Text("₹${total.toStringAsFixed(2)}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold,),),
+                  const Text(
+                    "Total:",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "₹${total.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: validCartItems.isEmpty || controller.selectedTableId.isEmpty
-                  ? null
-                  : () => placeOrder(tableId: controller.selectedTableId.value),
+              onPressed:
+                  validCartItems.isEmpty || controller.selectedTableId.isEmpty ? null : () => placeOrder(tableId: controller.selectedTableId.value),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 45),
                 backgroundColor: Color(0xFF1a2847),
                 disabledBackgroundColor: Colors.grey,
               ),
-              child: Text("Place Order", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: bold,),),
+              child: Text(
+                "Place Order",
+                style: StyleHelper.customStyle(
+                  color: AppColors.white,
+                  size: 4.sp,
+                  family: bold,
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
@@ -637,10 +682,16 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 minimumSize: const Size(double.infinity, 45),
                 disabledBackgroundColor: Colors.grey,
               ),
-              onPressed: validCartItems.isEmpty || controller.selectedTableId.isEmpty
-                  ? null
-                  : () => generateBill(tableId: controller.selectedTableId.value),
-              child: Text("Generate Bill", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: bold,),),
+              onPressed:
+                  validCartItems.isEmpty || controller.selectedTableId.isEmpty ? null : () => generateBill(tableId: controller.selectedTableId.value),
+              child: Text(
+                "Generate Bill",
+                style: StyleHelper.customStyle(
+                  color: AppColors.white,
+                  size: 4.sp,
+                  family: bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -649,24 +700,39 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
   }
 
   void updateQty(CartItemModel item, int change) {
-    controller.updateQty(cartItems: cartItems, item: item, change: change,);
+    controller.updateQty(
+      cartItems: cartItems,
+      item: item,
+      change: change,
+    );
     cartItems.refresh();
   }
 
   void generateBill({required String tableId}) {
     // Filter valid cart items before generating bill
-    final validCartItems = cartItems.where((item) =>
-    item.productId.isNotEmpty && item.productQty > 0).toList();
+    final validCartItems = cartItems.where((item) => item.productId.isNotEmpty && item.productQty > 0).toList();
 
-    Get.to(() => PaymentScreen(tableId: tableId, cartItems: validCartItems, tableNo: controller.selectedTable.value,));
+    Get.to(() => PaymentScreen(
+          tableId: tableId,
+          cartItems: validCartItems,
+          tableNo: controller.selectedTable.value,
+        ));
   }
 
   Future<void> placeOrder({required String tableId}) async {
     // Filter valid cart items before placing order
-    final validCartItems = cartItems.where((item) =>
-    item.productId.isNotEmpty &&item.productQty > 0).toList();
-    await controller.placeOrder(tableId: tableId, cartItems: validCartItems,);
-    Get.snackbar('Success', 'Order placed successfully', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white,);
+    final validCartItems = cartItems.where((item) => item.productId.isNotEmpty && item.productQty > 0).toList();
+    await controller.placeOrder(
+      tableId: tableId,
+      cartItems: validCartItems,
+    );
+    Get.snackbar(
+      'Success',
+      'Order placed successfully',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
   }
 
   void editTableDialog(BuildContext context, RestaurantTableModel table) {
@@ -678,23 +744,41 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
         builder: (context, setState) => AlertDialog(
           backgroundColor: AppColors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-          title: Text('Edit Table ${table.tableNo}', style: StyleHelper.customStyle(color: AppColors.black, size: 8.sp, family: semiBold,),),
+          title: Text(
+            'Edit Table ${table.tableNo}',
+            style: StyleHelper.customStyle(
+              color: AppColors.black,
+              size: 8.sp,
+              family: semiBold,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: capacityController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'Capacity', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),),
+                decoration: InputDecoration(
+                  labelText: 'Capacity',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                ),
               ).paddingOnly(bottom: 16.h),
               DropdownButtonFormField<String>(
                 value: status,
-                decoration: InputDecoration(labelText: 'Status', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),),
-                items: ['available', 'booked'].map((e) => DropdownMenuItem(value: e,
-                  child: Text(e.capitalizeFirst!),
-                )).toList(),
+                decoration: InputDecoration(
+                  labelText: 'Status',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                ),
+                items: ['available', 'booked']
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e.capitalizeFirst!),
+                        ))
+                    .toList(),
                 onChanged: (v) {
-                  setState(() {status = v!;});
+                  setState(() {
+                    status = v!;
+                  });
                 },
               ),
             ],
@@ -702,7 +786,12 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
           actions: [
             TextButton(
               onPressed: () => Get.back(),
-              child: Text('Cancel', style: StyleHelper.customStyle(color: Colors.grey, size: 6.sp,),
+              child: Text(
+                'Cancel',
+                style: StyleHelper.customStyle(
+                  color: Colors.grey,
+                  size: 6.sp,
+                ),
               ),
             ),
             ElevatedButton(
@@ -735,7 +824,12 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 backgroundColor: Color(0xFF2d4875),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
               ),
-              child: Text('Save', style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp,),
+              child: Text(
+                'Save',
+                style: StyleHelper.customStyle(
+                  color: AppColors.white,
+                  size: 6.sp,
+                ),
               ),
             ),
           ],

@@ -6,6 +6,7 @@ import 'package:restaurant_management_fierbase/model/daily_sale_model.dart';
 import 'package:restaurant_management_fierbase/model/product_model.dart';
 import 'package:restaurant_management_fierbase/model/restaurent_table.dart';
 import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
+import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
 
 import '../model/master_category_model.dart';
 
@@ -126,6 +127,7 @@ class RealtimeDbHelper {
     return UserDetail.fromMap(userId, data);
   }
 
+  /// Get Master Categories
   Future<List<MasterCategoryModel>> getMasterCategories() async {
     final snap = await ref('master_categories').get();
     if (!snap.exists) return [];
@@ -134,6 +136,7 @@ class RealtimeDbHelper {
     return map.entries.map((e) => MasterCategoryModel.fromMap(e.key, e.value)).toList();
   }
 
+  /// Get Categories By MasterID
   Future<List<CategoryModel>> getCategoriesByMaster(String masterId) async {
     try {
       final snap = await ref('categories').get();
@@ -158,6 +161,7 @@ class RealtimeDbHelper {
     }
   }
 
+  /// Get Categories
   Future<List<CategoryModel>> getCategories() async {
     final snap = await ref('categories').get();
     if (!snap.exists) return [];
@@ -166,6 +170,7 @@ class RealtimeDbHelper {
     return map.entries.map((e) => CategoryModel.fromMap(e.key, e.value)).toList();
   }
 
+  /// Get ProductsByCategory
   Future<List<ProductModel>> getProductsByCategory(String categoryId) async {
     try {
       final snap = await ref('products').get();
@@ -192,11 +197,13 @@ class RealtimeDbHelper {
     }
   }
 
+  /// Insert & Update Cart Items
   Future<void> insertOrUpdateCartItem({required String tableId, required CartItemModel item}) async {
     final path = 'carts/$tableId/${item.productId}';
     await ref(path).set(item.toMap());
   }
 
+  /// GetTable Cart List
   Future<List<CartItemModel>> getTableCartList(String tableId) async {
     final snap = await ref('carts/$tableId').get();
     if (!snap.exists) return [];
@@ -209,15 +216,18 @@ class RealtimeDbHelper {
     }).toList();
   }
 
+  /// Delete Cart Items
   Future<void> deleteCartItem(String tableId, String productId) {
     return ref('carts/$tableId/$productId').remove();
   }
 
+  /// Check Cart
   Future<bool> checkCart(String tableId) async {
     final snap = await ref('carts/$tableId').get();
     return snap.exists;
   }
 
+  /// Create Order
   Future<String?> createOrder({required String orderTotal, required String customerName, required String customerMobile, required int isGst, required String orderJson, required customerEmail,}) {
     return pushData(
       path: 'orders',
@@ -232,6 +242,7 @@ class RealtimeDbHelper {
     );
   }
 
+  /// Get Day-wise Revenue
   Future<List<DaySales>> getDayWiseRevenue() async {
     final snap = await ref('orders').get();
     if (!snap.exists) return [];
@@ -258,5 +269,26 @@ class RealtimeDbHelper {
     }).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
   }
+
+  /// Clear All Cart
+  Future<void> clearAllCarts() async {
+    await ref('carts').remove();
+  }
+
+  /// Reset All Tables
+  Future<void> resetAllTables() async {
+    final snap = await ref('restaurant_tables').get();
+    if (!snap.exists) return;
+
+    final tables = Map<String, dynamic>.from(snap.value as Map);
+
+    for (final id in tables.keys) {
+      await ref('restaurant_tables/$id').update({
+        'status': 'available',
+      });
+    }
+  }
+
+
 
 }

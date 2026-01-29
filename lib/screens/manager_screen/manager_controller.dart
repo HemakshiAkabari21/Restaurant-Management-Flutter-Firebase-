@@ -16,7 +16,6 @@ class ManagerController extends GetxController{
   final searchController = TextEditingController();
   final searchResults = <ProductModel>[].obs;
 
-
   // selection
   RxString selectedTableId = ''.obs;
   RxString selectedMasterId = ''.obs;
@@ -40,20 +39,14 @@ class ManagerController extends GetxController{
 
   // ================= FETCH DATA =================
 
-  Future<List<MasterCategoryModel>> getMasters() {return db.getMasterCategories();}
+ // Future<List<CategoryModel>> getCategories(String masterId) {return db.getCategoriesByMaster(masterId);}
 
-  Future<List<CategoryModel>> getCategories(String masterId) {return db.getCategoriesByMaster(masterId);}
+  Future<List<CategoryModel>> getCategories() {return db.getCategories();}
 
   Future<List<ProductModel>> getProducts(String categoryId) {return db.getProductsByCategory(categoryId);}
 
   Future<List<CartItemModel>> getCart(String tableId) {return db.getTableCartList(tableId);}
 
-  // ================= SELECTION LOGIC =================
-
-  Future<CategoryModel?> selectMasterAndGetFirstCategory(MasterCategoryModel master) async {
-    final categories = await getCategories(master.id);
-    return categories.isNotEmpty ? categories.first : null;
-  }
 
   // ================= CART OPERATIONS =================
 

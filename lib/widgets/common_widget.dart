@@ -17,13 +17,13 @@ import 'package:mailer/smtp_server.dart';
 import 'package:open_file/open_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:printing/printing.dart';
 import 'package:restaurant_management_fierbase/apptheme/app_colors.dart';
 import 'package:restaurant_management_fierbase/apptheme/stylehelper.dart';
+import 'package:restaurant_management_fierbase/firebase/realtime_db_helper.dart';
 import 'package:restaurant_management_fierbase/model/order_model.dart';
-import 'package:restaurant_management_fierbase/model/user_detail_model.dart';
 import 'package:restaurant_management_fierbase/utils/const_images_key.dart';
+import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -68,308 +68,30 @@ getAppVersion() async {
   return versionInfo.version;
 }
 
-/// formatDDMMMYYYY
-String formatDDMMMYYYY(String date) {
-  try {
-    DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(date);
-    return DateFormat("dd-MM-yyyy").format(parsedDate);
-  } catch (e) {
-    return '';
-  }
-}
-
-/// formatYYYYMMDD  yyyy-MM-dd
-String formatYYYYMMDD(String date) {
-  try {
-    DateTime parsedDate = DateFormat("dd-MM-yyyy").parse(date);
-    return DateFormat("yyyy-MM-dd").format(parsedDate);
-  } catch (e) {
-    return '';
-  }
-}
-
-/// Convert "HH:mm:ss" (24h) to "hh:mm a" (12h with AM/PM)
-String formatBookingTime(String time24h) {
-  try {
-    final inputFormat = DateFormat("HH:mm:ss");
-    final dateTime = inputFormat.parse(time24h);
-    final outputFormat = DateFormat("hh:mm a");
-    return outputFormat.format(dateTime);
-  } catch (e) {
-    return time24h;
-  }
-}
-
-TimeOfDay parseBookingTime(String time24h) {
-  try {
-    final inputFormat = DateFormat("HH:mm:ss");
-    final dateTime = inputFormat.parse(time24h);
-    return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
-  } catch (e) {
-    // fallback: return midnight if parsing fails
-    return const TimeOfDay(hour: 0, minute: 0);
-  }
-}
-
-/// 6:00 am format for TimeOfDay
-String formatTimeOfDay(TimeOfDay tod) {
+///Get Today's Key
+String get todayKey {
   final now = DateTime.now();
-  final dt = DateTime(now.year, now.month, now.day, tod.hour, tod.minute);
-  final format = DateFormat.jm(); // gives h:mm a (e.g. 6:00 AM)
-  return format.format(dt).toLowerCase(); // convert AM/PM to am/pm
+  return "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 }
 
-/// HH:MM Time format
-String convertToHHmm(String timeString) {
-  try {
-    DateTime dateTime = DateFormat("HH:mm:ss").parse(timeString);
-    return DateFormat("HH:mm").format(dateTime);
-  } catch (e) {
-    return timeString;
-  }
-}
+/// Daily Reset
+class DailyResetService {
+  static Future<void> checkAndResetIfNeeded() async {
+    final today = todayKey;
+    final lastReset = getStorage.read(LAST_RESET_KEY);
 
-String convertTimeOfDayToString(TimeOfDay timeOfDay) {
-  final now = DateTime.now();
-  final dateTime = DateTime(now.year, now.month, now.day, timeOfDay.hour, timeOfDay.minute);
-  return DateFormat("HH:mm").format(dateTime);
-}
+    if (lastReset != today) {
+      debugPrint('New day → resetting tables & carts');
 
-String convertTo24Hour(String timeString) {
-  var cleaned = timeString.replaceAll('\u202f', ' ').replaceAll('\u00a0', ' ').trim();
+      await RealtimeDbHelper.instance.resetAllTables();
+      await RealtimeDbHelper.instance.clearAllCarts();
 
-  cleaned = cleaned.replaceAllMapped(RegExp(r'\b(am|pm)\b', caseSensitive: false), (m) => m.group(0)!.toUpperCase());
-
-  final parsed = DateFormat('h:mm a').parse(cleaned);
-  debugPrint("Convert time is ::::: ${DateFormat('HH:mm').format(parsed)}");
-  return DateFormat('HH:mm').format(parsed);
-}
-
-class ContactInfo {
-  final String? name;
-  final String? phoneNumber;
-
-  ContactInfo({this.name, this.phoneNumber});
-
-  @override
-  String toString() => 'ContactInfo(name: $name, phone: $phoneNumber)';
-}
-
-class GlobalContactPicker {
-  static final GlobalContactPicker _instance = GlobalContactPicker._internal();
-  factory GlobalContactPicker() => _instance;
-  GlobalContactPicker._internal();
-
-  final FlutterContactPickerPlus _contactPicker = FlutterContactPickerPlus();
-
-  /// Opens device contact book and returns selected contact info
-  /// Returns ContactInfo with name and phone number, or null if cancelled
-  static Future<ContactInfo?> pickContact(BuildContext context) async {
-    return await _instance._pickContactInternal(context);
-  }
-
-  /// Picks contact with automatic permission handling
-  Future<ContactInfo?> _pickContactInternal(BuildContext context) async {
-    try {
-      // Check and request permission
-      final hasPermission = await checkContactPermission(context);
-      if (!hasPermission) return null;
-
-      // Pick contact
-      Contact? contact = await _contactPicker.selectContact();
-      if (contact == null) return null;
-
-      // Extract name and phone number
-      String? name = contact.fullName;
-      String? phoneNumber;
-
-      // Get first available phone number
-      if (contact.phoneNumbers != null && contact.phoneNumbers!.isNotEmpty) {
-        phoneNumber = contact.phoneNumbers!.first;
-      }
-
-      return ContactInfo(name: name, phoneNumber: phoneNumber);
-    } on PlatformException catch (e) {
-      handleContactError(context, e);
-      return null;
-    } catch (e) {
-      showErrorDialog(context, 'Error picking contact: $e');
-      return null;
-    }
-  }
-
-  /// Picks only phone number (contact picker focused on phone)
-  static Future<ContactInfo?> pickPhoneNumber(BuildContext context) async {
-    return await _instance.pickPhoneNumberInternal(context);
-  }
-
-  Future<ContactInfo?> pickPhoneNumberInternal(BuildContext context) async {
-    try {
-      // Check and request permission
-      final hasPermission = await checkContactPermission(context);
-      if (!hasPermission) return null;
-
-      // Pick phone number specifically
-      Contact? contact = await _contactPicker.selectPhoneNumber();
-      if (contact == null) return null;
-
-      String? name = contact.fullName;
-      String? phoneNumber = contact.selectedPhoneNumber;
-
-      return ContactInfo(name: name, phoneNumber: phoneNumber);
-    } on PlatformException catch (e) {
-      handleContactError(context, e);
-      return null;
-    } catch (e) {
-      showErrorDialog(context, 'Error picking phone number: $e');
-      return null;
-    }
-  }
-
-  /// Opens contact picker and automatically fills the provided controllers
-  static Future<bool> pickContactAndFillControllers(BuildContext context, {TextEditingController? nameController, TextEditingController? phoneController}) async {
-    ContactInfo? contact = await _instance._pickContactInternal(context);
-
-    if (contact != null) {
-      if (nameController != null && contact.name != null) {
-        nameController.text = contact.name!;
-      }
-      if (phoneController != null && contact.phoneNumber != null) {
-        phoneController.text = contact.phoneNumber!;
-      }
-      return true;
-    }
-    return false;
-  }
-
-  /// Check and request contact permission
-  Future<bool> checkContactPermission(BuildContext context) async {
-    PermissionStatus status = await Permission.contacts.status;
-
-    switch (status) {
-      case PermissionStatus.denied:
-        var result = await Permission.contacts.request();
-        if (result == PermissionStatus.granted) {
-          return true;
-        } else {
-          showPermissionDialog(context);
-          return false;
-        }
-
-      case PermissionStatus.granted:
-      case PermissionStatus.limited:
-        return true;
-
-      case PermissionStatus.permanentlyDenied:
-      case PermissionStatus.restricted:
-        showPermissionDialog(context);
-        return false;
-
-      default:
-        showPermissionDialog(context);
-        return false;
-    }
-  }
-
-  void showPermissionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Permission Required'),
-            content: const Text('Contacts permission is needed to access your contacts. Please enable it in app settings.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-              TextButton(
-                onPressed: () {
-                  Get.back();
-                  openAppSettings();
-                },
-                child: const Text('Open Settings'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void handleContactError(BuildContext context, PlatformException e) {
-    if (e.code == 'PERMISSION_DENIED') {
-      showPermissionDialog(context);
+      await getStorage.write(LAST_RESET_KEY, today);
     } else {
-      showErrorDialog(context, 'Error: ${e.message}');
+      debugPrint('Same day → no reset needed');
     }
   }
-
-  void showErrorDialog(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red, duration: const Duration(seconds: 3)));
-  }
 }
-
-extension ContactPickerExtension on BuildContext {
-  /// Quick access to pick contact from any BuildContext
-  Future<ContactInfo?> pickContact() => GlobalContactPicker.pickContact(this);
-
-  /// Quick access to pick phone number from any BuildContext
-  Future<ContactInfo?> pickPhoneNumber() => GlobalContactPicker.pickPhoneNumber(this);
-}
-
-class AnimatedRadioButton extends StatefulWidget {
-  final bool isSelected;
-  final VoidCallback onTap;
-  final String tag;
-
-  const AnimatedRadioButton({super.key, required this.isSelected, required this.onTap, required this.tag});
-
-  @override
-  State<AnimatedRadioButton> createState() => _AnimatedRadioButtonState();
-}
-
-class _AnimatedRadioButtonState extends State<AnimatedRadioButton> {
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        child: Row(
-          children: [
-            Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, animation) {
-                  return ScaleTransition(scale: animation, child: child);
-                },
-                child: widget.isSelected ? Icon(Icons.radio_button_checked, color: AppColors.black, size: 24.sp, key: ValueKey("check")) : Icon(Icons.radio_button_off, color: AppColors.black, size: 24.sp, key: ValueKey("empty")),
-              ),
-            ).paddingOnly(right: 5.w),
-            Text(widget.tag, style: StyleHelper.customStyle(color: AppColors.white, size: 16.sp, family: semiBold)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DashedLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    double dashWidth = 9, dashSpace = 5, startX = 0;
-    final paint =
-        Paint()
-          ..color = AppColors.white
-          ..strokeWidth = 1;
-    while (startX < size.width) {
-      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
-      startX += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
-
-
 
 class PaddingHorizontal15 extends StatelessWidget {
   const PaddingHorizontal15({super.key, required this.child, this.top, this.bottom, this.horizontal});
@@ -563,8 +285,7 @@ String formatCurrency(double value) {
   return '₹ ${value.toStringAsFixed(2)}';
 }
 
-class InvoicePdf {
-  static Future<File> generate(OrderModel order) async {
+class InvoicePdf {static Future<File> generate(OrderModel order) async {
     final pdf = pw.Document();
     pw.Font? regularFont;
     pw.Font? boldFont;

@@ -193,6 +193,8 @@ import 'package:restaurant_management_fierbase/model/cart_item_model.dart';
 import 'package:restaurant_management_fierbase/model/order_model.dart';
 import 'package:restaurant_management_fierbase/screens/main_layout_screen/main_layout_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:restaurant_management_fierbase/screens/manager_screen/manager_screen.dart';
+import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
 
 enum PaymentMethod { cash, card, upi, online, cheque }
@@ -354,7 +356,12 @@ class PaymentSuccessfullyController extends GetxController {
       );
 
       Get.back(); // loader
-      Get.offAll(() => MainLayoutScreen());
+      if(getStorage.read(USER_TYPE)=='Manager'){
+        Get.offAll(()=> ManagerScreen());
+      }else{
+        Get.offAll(() => MainLayoutScreen());
+      }
+
 
       Get.snackbar("Success", "Payment completed & invoice emailed", backgroundColor: Colors.green, colorText: Colors.white,);
     } catch (e) {

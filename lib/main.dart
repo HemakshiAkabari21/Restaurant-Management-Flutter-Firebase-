@@ -13,6 +13,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:restaurant_management_fierbase/screens/splash_screen/splash_screen.dart';
 import 'package:restaurant_management_fierbase/utils/const_keys.dart';
 import 'package:restaurant_management_fierbase/utils/const_local_string.dart';
+import 'package:restaurant_management_fierbase/widgets/common_widget.dart';
 import 'apptheme/app_colors.dart';
 import 'firebase/firebase_options.dart';
 
@@ -24,6 +25,7 @@ void main() {
     HttpOverrides.global = MyHttpOverrides();
     await notificationSetup();
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+   // await DailyResetService.checkAndResetIfNeeded();
     SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight,]).then((_) {
       runApp(const MyApp());
     });
