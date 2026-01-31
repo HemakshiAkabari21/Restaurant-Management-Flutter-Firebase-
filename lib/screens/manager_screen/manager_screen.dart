@@ -285,10 +285,10 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 ? Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator()))
                 : GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 5, crossAxisSpacing: 2.w, mainAxisSpacing: 2.h, childAspectRatio: 1),
+                        crossAxisCount: 8, crossAxisSpacing: 2.w, mainAxisSpacing: 4.h, childAspectRatio: 1),
                     itemCount: snap.data!.length,
                     itemBuilder: (_, index) {
-                      return buildProductCard(snap.data![index]);
+                      return buildProductCard1(snap.data![index]);
                     },
                   ),
           );
@@ -329,21 +329,13 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
       child: InkWell(
         onTap: () {
           if (controller.selectedTableId.isEmpty) {
-            Get.snackbar(
-              'No Table Selected',
-              'Please select a table first',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-            );
+            Get.snackbar('No Table Selected', 'Please select a table first',
+                snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
             return;
           }
 
           if (productQty == 0) {
-            controller.addToCart(
-              cartItems: cartItems,
-              product: product,
-            );
+            controller.addToCart(cartItems: cartItems, product: product);
             cartItems.refresh();
           } else {
             updateQty(item, 1);
@@ -372,17 +364,10 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                   child: product.image.isNotEmpty
                       ? ClipRRect(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                          child: Image.network(
-                            product.image,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.fastfood,
-                              size: 50,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        )
+                          child: Image.network(product.image,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.fastfood, size: 50, color: Colors.grey)))
                       : const Icon(Icons.fastfood, size: 50, color: Colors.grey),
                 ),
               ),
@@ -391,29 +376,12 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      product.name,
-                      style: StyleHelper.customStyle(
-                        size: 4.sp,
-                        family: medium,
-                        color: AppColors.white,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "₹${product.price}",
-                          style: TextStyle(
-                            fontSize: 4.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ).paddingOnly(top: 4.h),
+                    Text(product.name,
+                        style: StyleHelper.customStyle(size: 4.sp, family: medium, color: AppColors.white),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                    Text("₹${product.price}", style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white))
+                        .paddingOnly(top: 4.h),
                   ],
                 ),
               ),
@@ -454,28 +422,20 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
       return GestureDetector(
         onTap: () {
           if (controller.selectedTableId.isEmpty) {
-            Get.snackbar(
-              'No Table Selected',
-              'Please select a table first',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-            );
+            Get.snackbar('No Table Selected', 'Please select a table first',
+                snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
             return;
           }
 
           if (productQty == 0) {
-            controller.addToCart(
-              cartItems: cartItems,
-              product: product,
-            );
+            controller.addToCart(cartItems: cartItems, product: product);
             cartItems.refresh();
           } else {
             updateQty(item, 1);
           }
         },
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
+          padding: EdgeInsets.symmetric(horizontal: 2.w),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(12.r),
@@ -493,41 +453,19 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                product.name ?? '',
-                maxLines: null,
-                textAlign: TextAlign.center,
-                style: StyleHelper.customStyle(
-                  color: AppColors.black,
-                  size: 5.sp,
-                  family: semiBold,
-                ),
-              ),
-              Text(
-                "₹${product.price}",
-                style: StyleHelper.customStyle(
-                  color: AppColors.black,
-                  size: 4.sp,
-                  family: medium,
-                ),
-              ),
-              if (productQty > 0)
-                Container(
-                  margin: EdgeInsets.only(top: 4.h),
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondaryPrimaryColor,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Text(
-                    'Qty: $productQty',
-                    style: StyleHelper.customStyle(
-                      color: AppColors.white,
-                      size: 3.sp,
-                      family: semiBold,
-                    ),
-                  ),
-                ),
+              Text(product.name ?? '',
+                  maxLines: null, textAlign: TextAlign.center, style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: semiBold)),
+              Text("₹${product.price}", style: StyleHelper.customStyle(color: AppColors.black, size: 3.sp, family: medium)),
+              // if (productQty > 0)
+              //   Container(
+              //     margin: EdgeInsets.only(top: 4.h),
+              //     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+              //     decoration: BoxDecoration(
+              //       color: AppColors.secondaryPrimaryColor,
+              //       borderRadius: BorderRadius.circular(12.r),
+              //     ),
+              //     child: Text('Qty: $productQty', style: StyleHelper.customStyle(color: AppColors.white, size: 3.sp, family: semiBold)),
+              //   ),
             ],
           ),
         ),
@@ -555,10 +493,21 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               width: Get.width,
               child: Column(
                 children: [
-                  Text("Selected Items", style: StyleHelper.customStyle(size: 5.sp, family: bold, color: AppColors.white,),),
+                  Text(
+                    "Selected Items",
+                    style: StyleHelper.customStyle(
+                      size: 5.sp,
+                      family: bold,
+                      color: AppColors.white,
+                    ),
+                  ),
                   Obx(() {
                     if (controller.selectedTableId.isNotEmpty) {
-                      return Text("Table: ${controller.selectedTable.value}", style: TextStyle(fontSize: 12, color: AppColors.white.withOpacity(0.8),));
+                      return Text("Table: ${controller.selectedTable.value}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.white.withOpacity(0.8),
+                          ));
                     }
                     return const SizedBox.shrink();
                   }),
@@ -567,12 +516,36 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
             ),
             Row(
               children: [
-                Expanded(flex: 4, child: Text("Item Name",textAlign: TextAlign.start,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: semiBold),)),
-                Expanded(flex: 2, child: Text("Item qty",textAlign: TextAlign.center,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: semiBold),)),
-                Expanded(flex: 2, child: Text("is half",textAlign: TextAlign.center,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: semiBold),)),
-                Expanded(flex: 2, child: Text("Item price",textAlign: TextAlign.end,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: semiBold),)),
+                Expanded(
+                    flex: 6,
+                    child: Text(
+                      "Item Name",
+                      textAlign: TextAlign.start,
+                      style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: semiBold),
+                    )),
+                Expanded(
+                    flex: 2,
+                    child: Text(
+                      "Item qty",
+                      textAlign: TextAlign.center,
+                      style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: semiBold),
+                    )),
+                Expanded(
+                    flex: 2,
+                    child: Text(
+                      "is half",
+                      textAlign: TextAlign.center,
+                      style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: semiBold),
+                    )),
+                Expanded(
+                    flex: 2,
+                    child: Text(
+                      "Item price",
+                      textAlign: TextAlign.end,
+                      style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: semiBold),
+                    )),
               ],
-            ).paddingSymmetric(horizontal: 10,vertical: 6.h),
+            ).paddingSymmetric(horizontal: 10, vertical: 6.h),
             Expanded(child: buildCartList()),
             buildCartActions(),
           ],
@@ -615,8 +588,8 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 final effectiveQty = isHalf ? (item.productQty - 0.5) : item.productQty.toDouble();
                 final itemTotal = item.productPrice * effectiveQty;
 
-                return buildCart(item: item,itemTotal: itemTotal.toStringAsFixed(2),isHalf:isHalf,index:index);
-                  /*Card(
+                return buildCart(item: item, itemTotal: itemTotal.toStringAsFixed(2), isHalf: isHalf, index: index);
+                /*Card(
                   margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
                   child: Container(
                     decoration: BoxDecoration(
@@ -715,7 +688,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
     });
   }
 
-  Widget buildCart({required CartItemModel item,required String itemTotal, required bool isHalf, required int index}){
+  Widget buildCart({required CartItemModel item, required String itemTotal, required bool isHalf, required int index}) {
     return SizedBox(
       width: Get.width,
       child: Column(
@@ -724,15 +697,17 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                  flex: 4,
-                  child: Text(item.productName,maxLines: null,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: medium))),
+                  flex: 6,
+                  child: Text(item.productName, maxLines: null, style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: medium))),
               Expanded(
                   flex: 2,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       GestureDetector(
-                        onTap: (){updateQty(item, -1);},
+                        onTap: () {
+                          updateQty(item, -1);
+                        },
                         child: Container(
                           padding: EdgeInsets.all(2.sp),
                           alignment: Alignment.center,
@@ -740,47 +715,63 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                             borderRadius: BorderRadius.circular(4.r),
                             border: Border.all(color: AppColors.black),
                           ),
-                          child: Center(child: Icon(Icons.remove,color: AppColors.black,size: 8,)),
+                          child: Center(
+                              child: Icon(
+                            Icons.remove,
+                            color: AppColors.black,
+                            size: 8,
+                          )),
                         ),
                       ),
-                      Text( item.isHalf == 1
-                          ? '${item.productQty - 0.5}'
-                          : '${item.productQty}',style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: medium),),
+                      Text(
+                        item.isHalf == 1 ? '${item.productQty - 0.5}' : '${item.productQty}',
+                        style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: medium),
+                      ),
                       GestureDetector(
-                        onTap: (){updateQty(item, 1);},
+                        onTap: () {
+                          updateQty(item, 1);
+                        },
                         child: Container(
                           padding: EdgeInsets.all(2.sp),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4.r),
                             border: Border.all(color: AppColors.black),
                           ),
-                          child: Icon(Icons.add,color: AppColors.black,size: 8,),
+                          child: Icon(
+                            Icons.add,
+                            color: AppColors.black,
+                            size: 8,
+                          ),
                         ),
                       )
                     ],
                   )),
               Expanded(
-                flex: 2,
+                  flex: 2,
                   child: GestureDetector(
                     onTap: () {
                       controller.updateIsHalf(cartItems: cartItems, item: item, isHalf: item.isHalf == 1 ? 0 : 1);
                       cartItems.refresh();
                     },
                     child: Icon(
-                      item.isHalf == 1
-                          ? Icons.check_box
-                          : Icons.check_box_outline_blank,
+                      item.isHalf == 1 ? Icons.check_box : Icons.check_box_outline_blank,
                       size: 8.sp,
                     ),
                   ).paddingSymmetric(horizontal: 4.w)),
-
               Expanded(
                   flex: 2,
-                  child: Text('₹$itemTotal',textAlign: TextAlign.end,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: medium),)),
+                  child: Text(
+                    '₹$itemTotal',
+                    textAlign: TextAlign.end,
+                    style: StyleHelper.customStyle(color: AppColors.black, size: 4.sp, family: medium),
+                  )),
             ],
           ),
-          if(index != -1)
-            Divider(color: AppColors.gray,thickness: 0.5,)
+          if (index != -1)
+            Divider(
+              color: AppColors.gray,
+              thickness: 0.5,
+            )
         ],
       ),
     ).paddingSymmetric(horizontal: 10);
@@ -801,7 +792,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
         child: Column(
           children: [
             Container(
-              padding:  EdgeInsets.all(10),
+              padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
@@ -810,7 +801,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Total:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text("₹${total.toStringAsFixed(2)}", style:  TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("₹${total.toStringAsFixed(2)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
             ).paddingOnly(bottom: 8.h),
@@ -826,8 +817,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                         backgroundColor: Color(0xFF1a2847),
                         disabledBackgroundColor: Colors.grey,
                       ),
-                      child: Text("Place Order", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: bold))
-                  ),
+                      child: Text("Place Order", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: bold))),
                 ),
                 SizedBox(
                   width: 2.w,
@@ -899,9 +889,16 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                   labelText: 'Status',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
                 ),
-                items: ['available', 'booked'].map((e) => DropdownMenuItem(value: e, child: Text(e.capitalizeFirst!),)).toList(),
+                items: ['available', 'booked']
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e.capitalizeFirst!),
+                        ))
+                    .toList(),
                 onChanged: (v) {
-                  setState(() {status = v!;});
+                  setState(() {
+                    status = v!;
+                  });
                 },
               ),
             ],
@@ -912,37 +909,36 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               child: Text('Cancel', style: StyleHelper.customStyle(color: Colors.grey, size: 6.sp)),
             ),
             ElevatedButton(
-              onPressed: () async {
-                final updated = table.copyWith(
-                  capacityPeople: int.tryParse(capacityController.text) ?? table.capacityPeople,
-                  status: status,
-                );
-                await controller.updateTable(updated);
+                onPressed: () async {
+                  final updated = table.copyWith(
+                    capacityPeople: int.tryParse(capacityController.text) ?? table.capacityPeople,
+                    status: status,
+                  );
+                  await controller.updateTable(updated);
 
-                if (status == 'booked') {
-                  controller.selectedTableId.value = table.id;
-                  controller.selectedTable.value = '${table.tableNo}';
-                  await loadCart();
+                  if (status == 'booked') {
+                    controller.selectedTableId.value = table.id;
+                    controller.selectedTable.value = '${table.tableNo}';
+                    await loadCart();
 
-                  if (leftMasters.isNotEmpty) {
-                    controller.selectedMasterId.value = leftMasters.first.id;
-                    await loadCategory();
+                    if (leftMasters.isNotEmpty) {
+                      controller.selectedMasterId.value = leftMasters.first.id;
+                      await loadCategory();
 
-                    if (categoryList.isNotEmpty) {
-                      controller.selectedCategoryId.value = categoryList.first.id;
-                      await loadProduct();
+                      if (categoryList.isNotEmpty) {
+                        controller.selectedCategoryId.value = categoryList.first.id;
+                        await loadProduct();
+                      }
                     }
                   }
-                }
 
-                Get.back();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2d4875),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-              ),
-              child: Text('Save', style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp))
-            ),
+                  Get.back();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF2d4875),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                ),
+                child: Text('Save', style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp))),
           ],
         ),
       ),

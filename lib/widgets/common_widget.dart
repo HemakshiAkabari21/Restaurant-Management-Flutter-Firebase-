@@ -302,9 +302,11 @@ class InvoicePdf {
     } catch (_) {}
 
     pdf.addPage(
-      pw.Page(
-        build: (context) {
-          return pw.Column(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        build: (context)=> [
+           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
 
@@ -459,8 +461,8 @@ class InvoicePdf {
                   ]
               ),
             ],
-          );
-        },
+          )
+        ],
       ),
     );
 
