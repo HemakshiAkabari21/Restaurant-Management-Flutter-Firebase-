@@ -25,7 +25,7 @@ void main() {
     HttpOverrides.global = MyHttpOverrides();
     await notificationSetup();
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
-   // await DailyResetService.checkAndResetIfNeeded();
+    await DailyResetService.checkAndResetIfNeeded();
     SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight,]).then((_) {
       runApp(const MyApp());
     });

@@ -1,10 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_native_contact_picker_plus/flutter_native_contact_picker_plus.dart';
-import 'package:flutter_native_contact_picker_plus/model/contact_model.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -285,7 +282,8 @@ String formatCurrency(double value) {
   return '₹ ${value.toStringAsFixed(2)}';
 }
 
-class InvoicePdf {static Future<File> generate(OrderModel order) async {
+class InvoicePdf {
+  static Future<File> generate(OrderModel order) async {
     final pdf = pw.Document();
     pw.Font? regularFont;
     pw.Font? boldFont;

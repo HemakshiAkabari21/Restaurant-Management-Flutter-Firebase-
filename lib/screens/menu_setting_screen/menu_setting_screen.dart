@@ -300,8 +300,7 @@ class MenuSettingScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildProductCard(
-      ProductModel product, MenuSettingController controller) {
+  Widget _buildProductCard(ProductModel product, MenuSettingController controller) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

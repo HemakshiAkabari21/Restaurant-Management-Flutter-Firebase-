@@ -76,7 +76,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
         body: Row(
           children: [
             Expanded(
-              flex: 7,
+              flex: 6,
               child: Column(
                 children: [
                   SizedBox(
@@ -158,7 +158,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               ),
             ),
             Expanded(
-                flex: 3,
+                flex: 4,
                 child: Row(
                   children: [
                     Container(
@@ -285,10 +285,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 ? Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator()))
                 : GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 8,
-                      crossAxisSpacing: 2.w,
-                      mainAxisSpacing: 2.h,
-                    ),
+                        crossAxisCount: 5, crossAxisSpacing: 2.w, mainAxisSpacing: 2.h, childAspectRatio: 1),
                     itemCount: snap.data!.length,
                     itemBuilder: (_, index) {
                       return buildProductCard(snap.data![index]);
@@ -301,6 +298,133 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
   }
 
   Widget buildProductCard(ProductModel product) {
+    int productQty = 0;
+
+    // Find product in cart safely
+    try {
+      final cartItem = cartItems.firstWhere(
+        (e) => e.productId == product.id,
+        orElse: () => CartItemModel(productQty: 0, productId: '', productName: '', productPrice: 0.0, isHalf: 0, productNote: ''),
+      );
+
+      // Only use quantity if we found a valid cart item
+      if (cartItem.productId.isNotEmpty) {
+        productQty = cartItem.productQty;
+      }
+    } catch (e) {
+      productQty = 0;
+    }
+
+    CartItemModel item = CartItemModel(
+        productId: product.id,
+        productName: product.name,
+        productPrice: double.tryParse(product.price ?? '') ?? 0,
+        productQty: productQty,
+        isHalf: 0,
+        productNote: '');
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          if (controller.selectedTableId.isEmpty) {
+            Get.snackbar(
+              'No Table Selected',
+              'Please select a table first',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
+            return;
+          }
+
+          if (productQty == 0) {
+            controller.addToCart(
+              cartItems: cartItems,
+              product: product,
+            );
+            cartItems.refresh();
+          } else {
+            updateQty(item, 1);
+          }
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF2d4875), Color(0xFF1a2847)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: product.image.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          child: Image.network(
+                            product.image,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.fastfood,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.fastfood, size: 50, color: Colors.grey),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: StyleHelper.customStyle(
+                        size: 4.sp,
+                        family: medium,
+                        color: AppColors.white,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "₹${product.price}",
+                          style: TextStyle(
+                            fontSize: 4.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ).paddingOnly(top: 4.h),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildProductCard1(ProductModel product) {
     return Obx(() {
       int productQty = 0;
 
@@ -387,12 +511,23 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                   family: medium,
                 ),
               ),
-              /*if (productQty > 0)
+              if (productQty > 0)
                 Container(
                   margin: EdgeInsets.only(top: 4.h),
                   padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                  decoration: BoxDecoration(color: AppColors.secondaryPrimaryColor, borderRadius: BorderRadius.circular(12.r),),
-                  child: Text('Qty: $productQty', style: StyleHelper.customStyle(color: AppColors.white, size: 3.sp, family: semiBold,),),),*/
+                  decoration: BoxDecoration(
+                    color: AppColors.secondaryPrimaryColor,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Text(
+                    'Qty: $productQty',
+                    style: StyleHelper.customStyle(
+                      color: AppColors.white,
+                      size: 3.sp,
+                      family: semiBold,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -409,7 +544,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(3.sp),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -420,29 +555,24 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               width: Get.width,
               child: Column(
                 children: [
-                  Text(
-                    "Selected Items",
-                    style: StyleHelper.customStyle(
-                      size: 20,
-                      family: bold,
-                      color: AppColors.white,
-                    ),
-                  ),
+                  Text("Selected Items", style: StyleHelper.customStyle(size: 5.sp, family: bold, color: AppColors.white,),),
                   Obx(() {
                     if (controller.selectedTableId.isNotEmpty) {
-                      return Text(
-                        "Table: ${controller.selectedTable.value}",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.white.withOpacity(0.8),
-                        ),
-                      );
+                      return Text("Table: ${controller.selectedTable.value}", style: TextStyle(fontSize: 12, color: AppColors.white.withOpacity(0.8),));
                     }
                     return const SizedBox.shrink();
                   }),
                 ],
               ),
             ),
+            Row(
+              children: [
+                Expanded(flex: 4, child: Text("Item Name",textAlign: TextAlign.start,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: semiBold),)),
+                Expanded(flex: 2, child: Text("Item qty",textAlign: TextAlign.center,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: semiBold),)),
+                Expanded(flex: 2, child: Text("is half",textAlign: TextAlign.center,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: semiBold),)),
+                Expanded(flex: 2, child: Text("Item price",textAlign: TextAlign.end,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: semiBold),)),
+              ],
+            ).paddingSymmetric(horizontal: 10,vertical: 6.h),
             Expanded(child: buildCartList()),
             buildCartActions(),
           ],
@@ -485,7 +615,8 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 final effectiveQty = isHalf ? (item.productQty - 0.5) : item.productQty.toDouble();
                 final itemTotal = item.productPrice * effectiveQty;
 
-                return Card(
+                return buildCart(item: item,itemTotal: itemTotal.toStringAsFixed(2),isHalf:isHalf,index:index);
+                  /*Card(
                   margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
                   child: Container(
                     decoration: BoxDecoration(
@@ -502,21 +633,8 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                       children: [
                         Row(
                           children: [
-                            Expanded(
-                                child: Text(item.productName,
-                                    style: StyleHelper.customStyle(
-                                      family: bold,
-                                      color: AppColors.white,
-                                      size: 4.sp,
-                                    ))),
-                            Text(
-                              "₹${item.productPrice.toStringAsFixed(2)}",
-                              style: StyleHelper.customStyle(
-                                color: AppColors.white,
-                                size: 4.sp,
-                                family: semiBold,
-                              ),
-                            ),
+                            Expanded(child: Text(item.productName, style: StyleHelper.customStyle(family: bold, color: AppColors.white, size: 4.sp,))),
+                            Text("₹${item.productPrice.toStringAsFixed(2)}", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: semiBold)),
                           ],
                         ),
                         Row(
@@ -544,13 +662,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                                 ),
                               ],
                             ),
-                            Text(
-                              "₹${itemTotal.toStringAsFixed(2)}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.white,
-                              ),
-                            ),
+                            Text("₹${itemTotal.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.white)),
                           ],
                         ),
                         Row(
@@ -561,23 +673,12 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                                   decoration: InputDecoration(
                                     hintText: "Special note",
                                     isDense: true,
-                                    hintStyle: StyleHelper.customStyle(
-                                      color: AppColors.white,
-                                      size: 4.sp,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: AppColors.white),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: AppColors.white),
-                                    ),
+                                    hintStyle: StyleHelper.customStyle(color: AppColors.white, size: 4.sp),
+                                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white)),
+                                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.white)),
                                   ),
                                   onChanged: (val) {
-                                    controller.updateNote(
-                                      cartItems: cartItems,
-                                      item: item,
-                                      note: val,
-                                    );
+                                    controller.updateNote(cartItems: cartItems, item: item, note: val);
                                     cartItems.refresh();
                                   },
                                 ),
@@ -600,13 +701,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                                     },
                                   ),
                                 ),
-                                Text(
-                                  "Is Half",
-                                  style: StyleHelper.customStyle(
-                                    color: AppColors.white,
-                                    size: 12,
-                                  ),
-                                ),
+                                Text("Is Half", style: StyleHelper.customStyle(color: AppColors.white, size: 12)),
                               ],
                             ),
                           ],
@@ -614,10 +709,81 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                       ],
                     ),
                   ),
-                );
+                );*/
               },
             ));
     });
+  }
+
+  Widget buildCart({required CartItemModel item,required String itemTotal, required bool isHalf, required int index}){
+    return SizedBox(
+      width: Get.width,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                  flex: 4,
+                  child: Text(item.productName,maxLines: null,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: medium))),
+              Expanded(
+                  flex: 2,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: (){updateQty(item, -1);},
+                        child: Container(
+                          padding: EdgeInsets.all(2.sp),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4.r),
+                            border: Border.all(color: AppColors.black),
+                          ),
+                          child: Center(child: Icon(Icons.remove,color: AppColors.black,size: 8,)),
+                        ),
+                      ),
+                      Text( item.isHalf == 1
+                          ? '${item.productQty - 0.5}'
+                          : '${item.productQty}',style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: medium),),
+                      GestureDetector(
+                        onTap: (){updateQty(item, 1);},
+                        child: Container(
+                          padding: EdgeInsets.all(2.sp),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4.r),
+                            border: Border.all(color: AppColors.black),
+                          ),
+                          child: Icon(Icons.add,color: AppColors.black,size: 8,),
+                        ),
+                      )
+                    ],
+                  )),
+              Expanded(
+                flex: 2,
+                  child: GestureDetector(
+                    onTap: () {
+                      controller.updateIsHalf(cartItems: cartItems, item: item, isHalf: item.isHalf == 1 ? 0 : 1);
+                      cartItems.refresh();
+                    },
+                    child: Icon(
+                      item.isHalf == 1
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
+                      size: 8.sp,
+                    ),
+                  ).paddingSymmetric(horizontal: 4.w)),
+
+              Expanded(
+                  flex: 2,
+                  child: Text('₹$itemTotal',textAlign: TextAlign.end,style: StyleHelper.customStyle(color: AppColors.black,size: 4.sp,family: medium),)),
+            ],
+          ),
+          if(index != -1)
+            Divider(color: AppColors.gray,thickness: 0.5,)
+        ],
+      ),
+    ).paddingSymmetric(horizontal: 10);
   }
 
   Widget buildCartActions() {
@@ -631,11 +797,11 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
       });
 
       return Padding(
-        padding: const EdgeInsets.all(10),
+        padding: EdgeInsets.all(10),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding:  EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
@@ -643,55 +809,43 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    "Total:",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "₹${total.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text("Total:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("₹${total.toStringAsFixed(2)}", style:  TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed:
-                  validCartItems.isEmpty || controller.selectedTableId.isEmpty ? null : () => placeOrder(tableId: controller.selectedTableId.value),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 45),
-                backgroundColor: Color(0xFF1a2847),
-                disabledBackgroundColor: Colors.grey,
-              ),
-              child: Text(
-                "Place Order",
-                style: StyleHelper.customStyle(
-                  color: AppColors.white,
-                  size: 4.sp,
-                  family: bold,
+            ).paddingOnly(bottom: 8.h),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                      onPressed: validCartItems.isEmpty || controller.selectedTableId.isEmpty
+                          ? null
+                          : () => placeOrder(tableId: controller.selectedTableId.value),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 45),
+                        backgroundColor: Color(0xFF1a2847),
+                        disabledBackgroundColor: Colors.grey,
+                      ),
+                      child: Text("Place Order", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: bold))
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF1a2847),
-                minimumSize: const Size(double.infinity, 45),
-                disabledBackgroundColor: Colors.grey,
-              ),
-              onPressed:
-                  validCartItems.isEmpty || controller.selectedTableId.isEmpty ? null : () => generateBill(tableId: controller.selectedTableId.value),
-              child: Text(
-                "Generate Bill",
-                style: StyleHelper.customStyle(
-                  color: AppColors.white,
-                  size: 4.sp,
-                  family: bold,
+                SizedBox(
+                  width: 2.w,
                 ),
-              ),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF1a2847),
+                      minimumSize: const Size(double.infinity, 45),
+                      disabledBackgroundColor: Colors.grey,
+                    ),
+                    onPressed: validCartItems.isEmpty || controller.selectedTableId.isEmpty
+                        ? null
+                        : () => generateBill(tableId: controller.selectedTableId.value),
+                    child: Text("Generate Bill", style: StyleHelper.customStyle(color: AppColors.white, size: 4.sp, family: bold)),
+                  ),
+                )
+              ],
             ),
           ],
         ),
@@ -700,11 +854,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
   }
 
   void updateQty(CartItemModel item, int change) {
-    controller.updateQty(
-      cartItems: cartItems,
-      item: item,
-      change: change,
-    );
+    controller.updateQty(cartItems: cartItems, item: item, change: change);
     cartItems.refresh();
   }
 
@@ -712,27 +862,14 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
     // Filter valid cart items before generating bill
     final validCartItems = cartItems.where((item) => item.productId.isNotEmpty && item.productQty > 0).toList();
 
-    Get.to(() => PaymentScreen(
-          tableId: tableId,
-          cartItems: validCartItems,
-          tableNo: controller.selectedTable.value,
-        ));
+    Get.to(() => PaymentScreen(tableId: tableId, cartItems: validCartItems, tableNo: controller.selectedTable.value));
   }
 
   Future<void> placeOrder({required String tableId}) async {
     // Filter valid cart items before placing order
     final validCartItems = cartItems.where((item) => item.productId.isNotEmpty && item.productQty > 0).toList();
-    await controller.placeOrder(
-      tableId: tableId,
-      cartItems: validCartItems,
-    );
-    Get.snackbar(
-      'Success',
-      'Order placed successfully',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+    await controller.placeOrder(tableId: tableId, cartItems: validCartItems);
+    Get.snackbar('Success', 'Order placed successfully', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
   }
 
   void editTableDialog(BuildContext context, RestaurantTableModel table) {
@@ -744,14 +881,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
         builder: (context, setState) => AlertDialog(
           backgroundColor: AppColors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-          title: Text(
-            'Edit Table ${table.tableNo}',
-            style: StyleHelper.customStyle(
-              color: AppColors.black,
-              size: 8.sp,
-              family: semiBold,
-            ),
-          ),
+          title: Text('Edit Table ${table.tableNo}', style: StyleHelper.customStyle(color: AppColors.black, size: 8.sp, family: semiBold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -769,16 +899,9 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                   labelText: 'Status',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
                 ),
-                items: ['available', 'booked']
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(e.capitalizeFirst!),
-                        ))
-                    .toList(),
+                items: ['available', 'booked'].map((e) => DropdownMenuItem(value: e, child: Text(e.capitalizeFirst!),)).toList(),
                 onChanged: (v) {
-                  setState(() {
-                    status = v!;
-                  });
+                  setState(() {status = v!;});
                 },
               ),
             ],
@@ -786,13 +909,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
           actions: [
             TextButton(
               onPressed: () => Get.back(),
-              child: Text(
-                'Cancel',
-                style: StyleHelper.customStyle(
-                  color: Colors.grey,
-                  size: 6.sp,
-                ),
-              ),
+              child: Text('Cancel', style: StyleHelper.customStyle(color: Colors.grey, size: 6.sp)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -824,13 +941,7 @@ class _ManagerScreenState extends State<ManagerScreen> with SingleTickerProvider
                 backgroundColor: Color(0xFF2d4875),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
               ),
-              child: Text(
-                'Save',
-                style: StyleHelper.customStyle(
-                  color: AppColors.white,
-                  size: 6.sp,
-                ),
-              ),
+              child: Text('Save', style: StyleHelper.customStyle(color: AppColors.white, size: 6.sp))
             ),
           ],
         ),
